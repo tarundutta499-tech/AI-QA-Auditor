@@ -49,10 +49,10 @@ export default function StepFlow() {
             transition={{ duration: 0.5, delay: i * 0.4 }}
             className="relative flex md:flex-col items-center md:text-center text-left gap-6 md:gap-0"
           >
-            <div className="relative w-24 h-24 md:mb-6 shrink-0 bg-[#0B1120] rounded-full z-10">
+            <div className="relative w-20 h-20 md:mb-5 shrink-0 bg-[#0B1120] rounded-full z-10">
               <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-xl" />
               <div className="relative w-full h-full border-2 border-gray-800 rounded-full flex items-center justify-center group hover:border-blue-500 transition-colors">
-                <step.icon className="w-10 h-10 text-blue-400" />
+                <step.icon className="w-8 h-8 text-blue-400" />
                 
                 {/* Step Number Badge */}
                 <div className="absolute -top-2 -right-2 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-[0_0_10px_rgba(37,99,235,0.5)]">

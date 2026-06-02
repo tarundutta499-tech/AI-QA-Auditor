@@ -77,7 +77,7 @@ export default function FeaturesPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-24 space-y-32">
+      <div className="max-w-5xl mx-auto px-6 py-16 space-y-16">
         {features.map((feature, i) => (
           <motion.div 
             initial={{ opacity: 0, y: 50 }}
@@ -85,16 +85,16 @@ export default function FeaturesPage() {
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.6 }}
             key={i} 
-            className={`flex flex-col md:flex-row gap-12 items-center ${feature.align === 'right' ? 'md:flex-row-reverse' : ''}`}
+            className={`flex flex-col md:flex-row gap-8 items-center ${feature.align === 'right' ? 'md:flex-row-reverse' : ''}`}
           >
             
             {/* Text Side */}
             <div className="flex-1 space-y-6">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#1E293B] to-[#0F172A] border border-gray-700 flex items-center justify-center shadow-lg">
-                <feature.icon className="w-8 h-8 text-blue-400" />
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#1E293B] to-[#0F172A] border border-gray-700 flex items-center justify-center shadow-lg">
+                <feature.icon className="w-6 h-6 text-blue-400" />
               </div>
-              <h2 className="text-3xl font-bold text-white">{feature.title}</h2>
-              <p className="text-lg text-gray-400 leading-relaxed">{feature.description}</p>
+              <h2 className="text-2xl font-bold text-white">{feature.title}</h2>
+              <p className="text-base text-gray-400 leading-relaxed">{feature.description}</p>
             </div>
 
             {/* Visual Side Mockup */}
