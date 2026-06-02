@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-// This endpoint is completely separate from auth context, so we use a server-side admin client
-// to query companies based on the API Key
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // Requires a service role key to bypass RLS for API ingestion
-)
-
 export async function POST(req: NextRequest) {
+  // This endpoint is completely separate from auth context, so we use a server-side admin client
+  // to query companies based on the API Key
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  )
+  
   try {
     // 1. Verify API Key
     const authHeader = req.headers.get('authorization')

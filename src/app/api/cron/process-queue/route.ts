@@ -2,15 +2,15 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { processAudit } from '@/lib/audit-service'
 
-// We use service role to run cron without user session
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 // In a real production setup, we can use Vercel Cron to hit this endpoint 
 // every 1 minute. We process up to 3 calls per minute to stay under timeout limits.
 export async function GET() {
+  // We use service role to run cron without user session
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  )
+  
   try {
     // 1. Fetch pending calls
     const { data: pendingCalls, error: fetchError } = await supabase

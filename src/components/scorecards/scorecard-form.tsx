@@ -36,7 +36,7 @@ export function ScorecardForm({ initialData }: { initialData?: any }) {
   const totalWeightage = parameters.reduce((sum: number, p: any) => sum + (Number(p.weightage) || 0), 0)
 
   return (
-    <form action={initialData ? updateScorecard : createScorecard} className="space-y-8">
+    <form action={async (formData) => { await (initialData ? updateScorecard(formData) : createScorecard(formData)) }} className="space-y-8">
       {initialData && <input type="hidden" name="id" value={initialData.id} />}
       <Card>
         <CardHeader>
@@ -66,7 +66,7 @@ export function ScorecardForm({ initialData }: { initialData?: any }) {
           </Button>
         </CardHeader>
         <CardContent className="space-y-4">
-          {parameters.map((param) => (
+          {parameters.map((param: any) => (
             <div key={param.id} className="grid grid-cols-12 gap-4 items-end p-4 border rounded-lg bg-muted/50">
               <div className="col-span-12 md:col-span-5 space-y-2">
                 <Label>Parameter Name</Label>
