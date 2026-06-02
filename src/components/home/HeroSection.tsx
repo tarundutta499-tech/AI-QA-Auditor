@@ -194,10 +194,10 @@ export default function HeroSection() {
         <p className="text-sm text-gray-500 uppercase tracking-widest font-semibold mb-8">Trusted by QA teams at</p>
         <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
           <div className="text-xl font-bold text-white">AcmeCorp</div>
-          <div className="text-xl font-bold text-white">Teleperformance</div>
-          <div className="text-xl font-bold text-white">Concentrix</div>
-          <div className="text-xl font-bold text-white">iEnergizer</div>
+          <div className="text-xl font-bold text-white">TechSupport.io</div>
           <div className="text-xl font-bold text-white">GlobalBPO</div>
+          <div className="text-xl font-bold text-white">OmniChannel</div>
+          <div className="text-xl font-bold text-white">Stratos</div>
         </div>
       </motion.div>
     </section>

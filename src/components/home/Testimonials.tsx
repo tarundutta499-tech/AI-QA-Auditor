@@ -15,7 +15,7 @@ export default function Testimonials() {
             quote="We went from auditing 150 calls a month to 6,000. Our CSAT improved 11 points in 90 days."
             author="Priya Sharma"
             role="QA Manager"
-            company="Concentrix"
+            company="Leading BPO Partner"
             avatarSeed={12}
             delay={0.1}
           />
@@ -23,7 +23,7 @@ export default function Testimonials() {
             quote="The SOP-aware scoring is exactly what we needed. It actually understands our rubric."
             author="Rahul Mehra"
             role="Quality Lead"
-            company="Teleperformance"
+            company="Global Support Inc."
             avatarSeed={45}
             delay={0.2}
           />
@@ -31,7 +31,7 @@ export default function Testimonials() {
             quote="Fatal error detection alone saved us from a major compliance breach."
             author="Anjali Verma"
             role="Head of Quality"
-            company="iEnergizer"
+            company="TechSupport.io"
             avatarSeed={32}
             delay={0.3}
           />
