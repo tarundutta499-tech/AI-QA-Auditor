@@ -29,11 +29,11 @@ export function ScorecardForm({ initialData }: { initialData?: any }) {
   }
 
   const updateParameter = (id: number, field: string, value: any) => {
-    setParameters(parameters.map(p => p.id === id ? { ...p, [field]: value } : p))
+    setParameters(parameters.map((p: any) => p.id === id ? { ...p, [field]: value } : p))
   }
 
-  const totalMaxScore = parameters.reduce((sum, p) => sum + (Number(p.max_score) || 0), 0)
-  const totalWeightage = parameters.reduce((sum, p) => sum + (Number(p.weightage) || 0), 0)
+  const totalMaxScore = parameters.reduce((sum, p: any) => sum + (Number(p.max_score) || 0), 0)
+  const totalWeightage = parameters.reduce((sum, p: any) => sum + (Number(p.weightage) || 0), 0)
 
   return (
     <form action={initialData ? updateScorecard : createScorecard} className="space-y-8">
