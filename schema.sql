@@ -1,0 +1,131 @@
+-- Schema for QA Copilot
+
+-- 1. companies
+CREATE TABLE public.companies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::TEXT, NOW()) NOT NULL
+);
+
+-- 2. users (extends Supabase Auth users)
+CREATE TABLE public.users (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    company_id UUID REFERENCES public.companies(id) ON DELETE CASCADE,
+    role TEXT NOT NULL CHECK (role IN ('admin', 'qa', 'tl', 'agent')),
+    name TEXT,
+    email TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::TEXT, NOW()) NOT NULL
+);
+
+-- 3. scorecards
+CREATE TABLE public.scorecards (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES public.companies(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::TEXT, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::TEXT, NOW()) NOT NULL
+);
+
+-- 4. scorecard_parameters
+CREATE TABLE public.scorecard_parameters (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    scorecard_id UUID REFERENCES public.scorecards(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    max_score DECIMAL NOT NULL,
+    is_mandatory BOOLEAN DEFAULT false,
+    weightage DECIMAL DEFAULT 1.0,
+    pass_fail_rules JSONB
+);
+
+-- 5. calls
+CREATE TABLE public.calls (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES public.companies(id) ON DELETE CASCADE,
+    agent_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    client_name TEXT,
+    audio_url TEXT,
+    duration INTEGER,
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'transcribed', 'audited')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::TEXT, NOW()) NOT NULL
+);
+
+-- 6. transcripts
+CREATE TABLE public.transcripts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    call_id UUID REFERENCES public.calls(id) ON DELETE CASCADE,
+    content JSONB,
+    dead_air_events JSONB
+);
+
+-- 7. audits
+CREATE TABLE public.audits (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    call_id UUID REFERENCES public.calls(id) ON DELETE CASCADE,
+    scorecard_id UUID REFERENCES public.scorecards(id) ON DELETE CASCADE,
+    qa_id UUID REFERENCES public.users(id) ON DELETE SET NULL, -- system if null or specific system UUID
+    overall_score DECIMAL,
+    compliance_percent DECIMAL,
+    status TEXT DEFAULT 'completed',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::TEXT, NOW()) NOT NULL
+);
+
+-- 8. audit_results
+CREATE TABLE public.audit_results (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    audit_id UUID REFERENCES public.audits(id) ON DELETE CASCADE,
+    parameter_id UUID REFERENCES public.scorecard_parameters(id) ON DELETE CASCADE,
+    obtained_score DECIMAL,
+    is_passed BOOLEAN,
+    evidence TEXT,
+    reasoning TEXT,
+    coaching_feedback TEXT
+);
+
+-- 9. coaching
+CREATE TABLE public.coaching (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    audit_id UUID REFERENCES public.audits(id) ON DELETE CASCADE,
+    agent_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    strengths TEXT,
+    improvement_areas TEXT,
+    recommended_actions TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::TEXT, NOW()) NOT NULL
+);
+
+-- 10. dsat_records
+CREATE TABLE public.dsat_records (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES public.companies(id) ON DELETE CASCADE,
+    call_id UUID REFERENCES public.calls(id) ON DELETE CASCADE,
+    score INTEGER,
+    customer_feedback TEXT,
+    root_cause_category TEXT,
+    ai_analysis TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::TEXT, NOW()) NOT NULL
+);
+
+-- 11. calibrations
+CREATE TABLE public.calibrations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    audit_id UUID REFERENCES public.audits(id) ON DELETE CASCADE,
+    qa_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    qa_score INTEGER,
+    ai_score INTEGER,
+    variance INTEGER,
+    disagreement_areas JSONB,
+    suggested_final_score INTEGER
+);
+
+-- Enable RLS
+ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.scorecards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.scorecard_parameters ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.calls ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.transcripts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audit_results ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.coaching ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.dsat_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.calibrations ENABLE ROW LEVEL SECURITY;
