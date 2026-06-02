@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { ShieldCheck, Globe, Mail } from "lucide-react"
 
-export function MarketingFooter() {
+export default function Footer() {
   return (
     <footer className="bg-[#020617] border-t border-gray-800/50 pt-20 pb-10">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-5 gap-12">
@@ -27,46 +27,49 @@ export function MarketingFooter() {
           </div>
         </div>
 
-        {/* Links Columns */}
+        {/* Product Column */}
         <div>
           <h4 className="text-white font-semibold mb-4">Product</h4>
           <ul className="space-y-2 text-sm text-gray-400">
             <li><Link href="/features" className="hover:text-blue-400 transition-colors">Features</Link></li>
+            <li><Link href="/#how-it-works" className="hover:text-blue-400 transition-colors">How It Works</Link></li>
             <li><Link href="/#pricing" className="hover:text-blue-400 transition-colors">Pricing</Link></li>
-            <li><Link href="#" className="hover:text-blue-400 transition-colors">Integrations</Link></li>
-            <li><Link href="#" className="hover:text-blue-400 transition-colors">Changelog</Link></li>
           </ul>
         </div>
         
+        {/* Company Column */}
         <div>
           <h4 className="text-white font-semibold mb-4">Company</h4>
           <ul className="space-y-2 text-sm text-gray-400">
-            <li><Link href="#" className="hover:text-blue-400 transition-colors">About Us</Link></li>
+            <li><Link href="#" className="hover:text-blue-400 transition-colors">About</Link></li>
             <li><Link href="/contact" className="hover:text-blue-400 transition-colors">Contact</Link></li>
             <li><Link href="#" className="hover:text-blue-400 transition-colors">Careers</Link></li>
-            <li><Link href="#" className="hover:text-blue-400 transition-colors">Partners</Link></li>
           </ul>
         </div>
 
+        {/* Resources Column */}
         <div>
           <h4 className="text-white font-semibold mb-4">Resources</h4>
           <ul className="space-y-2 text-sm text-gray-400">
-            <li><Link href="/blog" className="hover:text-blue-400 transition-colors">Blog</Link></li>
+            <li><Link href="#" className="hover:text-blue-400 transition-colors">Blog</Link></li>
+            <li><Link href="#" className="hover:text-blue-400 transition-colors">Case Studies</Link></li>
             <li><Link href="#" className="hover:text-blue-400 transition-colors">Documentation</Link></li>
-            <li><Link href="#" className="hover:text-blue-400 transition-colors">Help Center</Link></li>
-            <li><Link href="#" className="hover:text-blue-400 transition-colors">Webinars</Link></li>
           </ul>
         </div>
 
       </div>
       
       <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-gray-800/50 flex flex-col md:flex-row items-center justify-between gap-4">
-        <p className="text-gray-500 text-sm">
-          © {new Date().getFullYear()} QA Copilot. All rights reserved.
+        <p className="text-gray-500 text-sm flex gap-4">
+          <span>© 2026 QA Copilot. All rights reserved.</span>
+          <Link href="#" className="hover:text-gray-300">Privacy Policy</Link>
+          <Link href="#" className="hover:text-gray-300">Terms of Service</Link>
         </p>
         <div className="flex items-center gap-2">
           <span className="text-gray-500 text-sm">Powered by</span>
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-violet-500 font-bold text-sm">Google Gemini</span>
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-violet-500 font-bold text-sm flex items-center gap-1">
+            Google Gemini
+          </span>
         </div>
       </div>
     </footer>

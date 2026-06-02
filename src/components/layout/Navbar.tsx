@@ -1,16 +1,22 @@
 "use client"
 
 import Link from "next/link"
-import { motion } from "framer-motion"
+import { motion, useScroll, useMotionValueEvent } from "framer-motion"
 import { ShieldCheck, Menu, X } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 
-export function MarketingNavbar() {
+export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
+  const { scrollY } = useScroll()
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    setIsScrolled(latest > 20)
+  })
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#020617]/80 backdrop-blur-md border-b border-gray-800/50">
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-[#020617]/80 backdrop-blur-md border-b border-gray-800/50 shadow-lg' : 'bg-transparent'}`}>
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group">
           <div className="bg-gradient-to-br from-blue-500 to-violet-600 p-1.5 rounded-lg group-hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all">
@@ -24,18 +30,17 @@ export function MarketingNavbar() {
           <Link href="/features" className="hover:text-white transition-colors">Features</Link>
           <Link href="/#how-it-works" className="hover:text-white transition-colors">How It Works</Link>
           <Link href="/#pricing" className="hover:text-white transition-colors">Pricing</Link>
-          <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
           <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
         </div>
 
         {/* Desktop CTAs */}
         <div className="hidden md:flex items-center gap-4">
           <Link href="/login" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
-            Sign in
+            Login
           </Link>
-          <Link href="/login">
+          <Link href="/contact">
             <Button className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-5 h-9 shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all hover:scale-105">
-              Start Free Trial
+              Request a Demo
             </Button>
           </Link>
         </div>
@@ -49,21 +54,20 @@ export function MarketingNavbar() {
       {/* Mobile Drawer */}
       {isOpen && (
         <motion.div 
-          initial={{ opacity: 0, y: -10 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          exit={{ opacity: 0, y: -10 }}
-          className="md:hidden bg-[#020617] border-b border-gray-800/50 p-6 flex flex-col gap-4 shadow-xl"
+          initial={{ opacity: 0, x: 20 }} 
+          animate={{ opacity: 1, x: 0 }} 
+          exit={{ opacity: 0, x: 20 }}
+          className="md:hidden fixed top-16 right-0 bottom-0 w-64 bg-[#020617] border-l border-gray-800/50 p-6 flex flex-col gap-4 shadow-xl z-40"
         >
           <Link href="/features" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">Features</Link>
           <Link href="/#how-it-works" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">How It Works</Link>
           <Link href="/#pricing" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">Pricing</Link>
-          <Link href="/blog" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">Blog</Link>
           <Link href="/contact" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">Contact</Link>
-          <hr className="border-gray-800 my-2" />
-          <Link href="/login" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">Sign in</Link>
-          <Link href="/login" onClick={() => setIsOpen(false)}>
+          <hr className="border-gray-800 my-4" />
+          <Link href="/login" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">Login</Link>
+          <Link href="/contact" onClick={() => setIsOpen(false)}>
             <Button className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-md mt-2">
-              Start Free Trial
+              Request a Demo
             </Button>
           </Link>
         </motion.div>

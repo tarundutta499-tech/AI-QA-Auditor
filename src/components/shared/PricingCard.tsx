@@ -3,6 +3,7 @@
 import { motion } from "framer-motion"
 import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 interface PricingCardProps {
   tier: string
@@ -10,10 +11,17 @@ interface PricingCardProps {
   description: string
   features: string[]
   isPopular?: boolean
+  ctaText: string
   delay?: number
+  isAnnual?: boolean
 }
 
-export function PricingCard({ tier, price, description, features, isPopular, delay = 0 }: PricingCardProps) {
+export default function PricingCard({ tier, price, description, features, isPopular, ctaText, delay = 0, isAnnual = false }: PricingCardProps) {
+  // Apply 20% discount visually if annual is toggled
+  const displayPrice = isAnnual && price !== "Custom" 
+    ? `₹${(parseInt(price.replace(/,/g, '').replace('₹', '')) * 0.8).toLocaleString()}` 
+    : price
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -26,7 +34,7 @@ export function PricingCard({ tier, price, description, features, isPopular, del
     >
       {isPopular && (
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-blue-500 to-violet-500 text-white text-xs font-bold px-4 py-1 rounded-full uppercase tracking-wider">
-          Most Popular
+          MOST POPULAR
         </div>
       )}
       
@@ -34,9 +42,12 @@ export function PricingCard({ tier, price, description, features, isPopular, del
         <h3 className="text-xl font-medium text-white mb-2">{tier}</h3>
         <p className="text-gray-400 text-sm mb-6 h-10">{description}</p>
         <div className="flex items-baseline gap-1">
-          <span className="text-4xl font-bold text-white">{price}</span>
+          <span className="text-4xl font-bold text-white">{displayPrice}</span>
           {price !== "Custom" && <span className="text-gray-400">/mo</span>}
         </div>
+        {isAnnual && price !== "Custom" && (
+          <div className="text-green-400 text-xs mt-1 font-medium">Billed annually</div>
+        )}
       </div>
 
       <ul className="space-y-4 mb-8 flex-grow">
@@ -48,15 +59,17 @@ export function PricingCard({ tier, price, description, features, isPopular, del
         ))}
       </ul>
 
-      <Button 
-        className={`w-full h-12 rounded-xl font-medium ${
-          isPopular 
-            ? "bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]" 
-            : "bg-white/10 hover:bg-white/20 text-white"
-        } transition-all`}
-      >
-        {price === "Custom" ? "Contact Sales" : "Start Free Trial"}
-      </Button>
+      <Link href="/contact" className="w-full">
+        <Button 
+          className={`w-full h-12 rounded-xl font-medium ${
+            isPopular 
+              ? "bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]" 
+              : "bg-white/10 hover:bg-white/20 text-white"
+          } transition-all`}
+        >
+          {ctaText}
+        </Button>
+      </Link>
     </motion.div>
   )
 }

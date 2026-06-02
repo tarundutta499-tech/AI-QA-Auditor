@@ -1,60 +1,65 @@
-import { MarketingNavbar } from "@/components/marketing/navbar"
-import { MarketingFooter } from "@/components/marketing/footer"
+"use client"
+
+import Navbar from "@/components/layout/Navbar"
+import Footer from "@/components/layout/Footer"
 import { Shield, FileUp, Zap, HeartPulse, AlertOctagon, LineChart, Database, Code, Globe } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { motion } from "framer-motion"
 
 export default function FeaturesPage() {
   const features = [
     {
-      title: "100% Coverage Auditing",
-      description: "Stop relying on 2% random sampling. QA Copilot automatically ingests and audits every single customer interaction—ensuring nothing slips through the cracks and you have complete visibility over your BPO operations.",
-      icon: Shield,
+      title: "SOP Upload",
+      description: "Upload your exact grading rubric or SOP document (PDF or Word doc). The AI learns your specific business rules in seconds.",
+      icon: FileUp,
       align: "left"
     },
     {
-      title: "SOP-Aware Custom Scorecards",
-      description: "Upload your exact grading rubric or SOP document. The AI learns your specific business rules, compliance requirements, and grading weights, scoring agents exactly how your human QA team would.",
-      icon: FileUp,
+      title: "100% Interaction Coverage",
+      description: "Stop relying on 2% random sampling. QA Copilot automatically ingests and audits every single call, chat, and email—ensuring nothing is missed.",
+      icon: Shield,
       align: "right"
     },
     {
-      title: "Instant Agent Coaching",
-      description: "Feedback is delivered the moment a call ends, not 3 weeks later. Agents receive immediate AI-generated coaching notes highlighting exactly what they did right and where they need to improve.",
+      title: "Empathy & Tone Scoring",
+      description: "Go beyond just reading transcripts. Our AI detects frustration, warmth, and professionalism to ensure high emotional intelligence.",
+      icon: HeartPulse,
+      align: "left"
+    },
+    {
+      title: "Fatal Error Detection",
+      description: "Instantly detect critical compliance breaches—like missing mandatory disclaimers. Managers are alerted to fatal errors the moment they occur.",
+      icon: AlertOctagon,
+      align: "right"
+    },
+    {
+      title: "Instant Coaching Notes",
+      description: "Feedback is delivered the moment a call ends. Agents receive immediate AI-generated coaching notes highlighting exactly where they need to improve.",
       icon: Zap,
       align: "left"
     },
     {
-      title: "Advanced Empathy Detection",
-      description: "Go beyond just reading transcripts. Our AI analyzes sentiment, frustration markers, and tone to ensure your agents are providing empathetic, high-quality customer service.",
-      icon: HeartPulse,
-      align: "right"
-    },
-    {
-      title: "Fatal Error Flagging",
-      description: "Instantly detect critical compliance breaches—like missing mandatory disclaimers or violating HIPAA/PCI rules. Managers are immediately alerted to fatal errors before they become massive liabilities.",
-      icon: AlertOctagon,
-      align: "left"
-    },
-    {
-      title: "Visual Trend Analytics",
-      description: "Track performance over time with beautiful, drill-down dashboards. Identify systemic issues across your entire floor, or pinpoint specific training needs for individual agents.",
+      title: "Trend & Performance Reports",
+      description: "Track performance over time with beautiful, drill-down dashboards. Generate weekly and monthly analytics for every agent on the floor.",
       icon: LineChart,
       align: "right"
     },
     {
       title: "Bulk Batch Uploads",
-      description: "Easily drag and drop thousands of call recordings or chat transcripts at once. Our ingestion engine processes massive batches in parallel, giving you reports in minutes.",
+      description: "Easily drag and drop hundreds of call recordings or chat transcripts at once. Our ingestion engine processes massive batches in parallel.",
       icon: Database,
       align: "left"
     },
     {
       title: "Developer API Access",
-      description: "Integrate QA Copilot directly into your existing tech stack. Stream interactions automatically from Genesys, Zendesk, or Salesforce using our robust REST API.",
+      description: "Integrate QA Copilot directly into your existing tech stack. Stream interactions automatically from your telephony or CRM directly via REST API.",
       icon: Code,
       align: "right"
     },
     {
       title: "Multi-Language Support",
-      description: "Auditing global teams? QA Copilot natively understands and audits interactions in over 30 languages, including Spanish, French, German, Hindi, and Tagalog.",
+      description: "Auditing global or diverse teams? QA Copilot natively understands and audits interactions in Hindi, English, and regional languages.",
       icon: Globe,
       align: "left"
     }
@@ -62,19 +67,26 @@ export default function FeaturesPage() {
 
   return (
     <div className="min-h-screen bg-[#020617] selection:bg-blue-500/30 selection:text-white">
-      <MarketingNavbar />
+      <Navbar />
       
       <div className="pt-32 pb-20 border-b border-gray-800/50 relative overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[400px] bg-blue-600/10 blur-[100px] rounded-full pointer-events-none" />
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 tracking-tight">Platform Features</h1>
+          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 tracking-tight">Built for the Way BPOs Actually Work</h1>
           <p className="text-xl text-gray-400">Everything you need to automate QA, enforce compliance, and build world-class customer support teams.</p>
         </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-6 py-24 space-y-32">
         {features.map((feature, i) => (
-          <div key={i} className={`flex flex-col md:flex-row gap-12 items-center ${feature.align === 'right' ? 'md:flex-row-reverse' : ''}`}>
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            key={i} 
+            className={`flex flex-col md:flex-row gap-12 items-center ${feature.align === 'right' ? 'md:flex-row-reverse' : ''}`}
+          >
             
             {/* Text Side */}
             <div className="flex-1 space-y-6">
@@ -108,11 +120,20 @@ export default function FeaturesPage() {
               </div>
             </div>
 
-          </div>
+          </motion.div>
         ))}
       </div>
+      
+      <div className="py-24 text-center border-t border-gray-800/50 bg-[#0B1120]">
+        <h2 className="text-3xl font-bold text-white mb-6">Want to see these features live?</h2>
+        <Link href="/contact">
+          <Button className="h-14 px-10 bg-blue-600 hover:bg-blue-500 text-white rounded-full text-lg font-bold shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all hover:scale-105">
+            Book a Demo
+          </Button>
+        </Link>
+      </div>
 
-      <MarketingFooter />
+      <Footer />
     </div>
   )
 }
