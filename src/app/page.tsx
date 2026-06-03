@@ -4,10 +4,6 @@ import HeroSection from "@/components/home/HeroSection"
 import ProblemSection from "@/components/home/ProblemSection"
 import SolutionSection from "@/components/home/SolutionSection"
 import HowItWorks from "@/components/home/HowItWorks"
-import DashboardPreview from "@/components/home/DashboardPreview"
-import PricingSection from "@/components/home/PricingSection"
-import Testimonials from "@/components/home/Testimonials"
-import CTABanner from "@/components/home/CTABanner"
 
 export default function HomePage() {
   return (
@@ -17,10 +13,6 @@ export default function HomePage() {
       <ProblemSection />
       <SolutionSection />
       <HowItWorks />
-      <DashboardPreview />
-      <PricingSection />
-      <Testimonials />
-      <CTABanner />
       <Footer />
     </div>
   )

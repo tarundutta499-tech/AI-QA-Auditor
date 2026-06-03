@@ -28,10 +28,11 @@ export default function Navbar() {
         {/* Desktop Links */}
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
           <Link href="/features" className="hover:text-white transition-colors">Features</Link>
+          <Link href="/platform" className="hover:text-white transition-colors">Platform</Link>
           <Link href="/#how-it-works" className="hover:text-white transition-colors">How It Works</Link>
-          <Link href="/#pricing" className="hover:text-white transition-colors">Pricing</Link>
+          <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
           <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
-          <Link href="/dashboard" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">AI Dashboard</Link>
+          <Link href="/demo" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">Try AI Demo</Link>
         </div>
 
         {/* Desktop CTAs */}
@@ -61,10 +62,11 @@ export default function Navbar() {
           className="md:hidden fixed top-16 right-0 bottom-0 w-64 bg-[#020617] border-l border-gray-800/50 p-6 flex flex-col gap-4 shadow-xl z-40"
         >
           <Link href="/features" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">Features</Link>
+          <Link href="/platform" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">Platform</Link>
           <Link href="/#how-it-works" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">How It Works</Link>
-          <Link href="/#pricing" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">Pricing</Link>
+          <Link href="/pricing" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">Pricing</Link>
           <Link href="/contact" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">Contact</Link>
-          <Link href="/dashboard" onClick={() => setIsOpen(false)} className="text-blue-400 hover:text-blue-300 font-semibold">AI Dashboard</Link>
+          <Link href="/demo" onClick={() => setIsOpen(false)} className="text-blue-400 hover:text-blue-300 font-semibold">Try AI Demo</Link>
           <hr className="border-gray-800 my-4" />
           <Link href="/login" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">Login</Link>
           <Link href="/contact" onClick={() => setIsOpen(false)}>

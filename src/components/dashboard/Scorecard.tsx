@@ -9,6 +9,11 @@ export interface ScorecardData {
   fatalErrors: string[]
   coachingNotes: string[]
   callSummary: string
+  checklist?: {
+    parameter: string
+    status: string
+    reasoning: string
+  }[]
 }
 
 interface ScorecardProps {
@@ -56,6 +61,35 @@ export default function Scorecard({ data }: ScorecardProps) {
           {data.callSummary}
         </p>
       </div>
+
+      {/* Detailed Checklist */}
+      {data.checklist && data.checklist.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-blue-400" />
+            Detailed QA Checklist
+          </h3>
+          <div className="space-y-3">
+            {data.checklist.map((item, idx) => (
+              <div key={idx} className="bg-[#020617] p-4 rounded-xl border border-gray-800/50 flex flex-col md:flex-row md:items-start gap-4">
+                <div className="flex-1">
+                  <div className="font-medium text-gray-200">{item.parameter}</div>
+                  <div className="text-sm text-gray-500 mt-1">{item.reasoning}</div>
+                </div>
+                <div className="shrink-0">
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                    item.status.toLowerCase() === 'yes' ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
+                    item.status.toLowerCase() === 'no' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+                    'bg-gray-500/10 text-gray-400 border border-gray-500/20'
+                  }`}>
+                    {item.status.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Fatal Errors */}
       {data.fatalErrors && data.fatalErrors.length > 0 && (

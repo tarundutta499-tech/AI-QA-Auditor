@@ -1,48 +1,163 @@
-import { login } from './actions'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import Link from 'next/link'
+"use client"
 
-export default async function LoginPage(
-  props: {
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+import { useState } from "react"
+import { createBrowserClient } from '@supabase/ssr'
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { ShieldCheck, Loader2, Key } from "lucide-react"
+
+export default function LoginPage() {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  
+  const router = useRouter()
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (authError) throw authError
+
+      // Fetch user role to determine routing
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', data.user.id)
+        .single()
+
+      if (userError) {
+        console.error("Could not fetch user role:", userError)
+        router.push("/dashboard") // Default fallback
+        return
+      }
+
+      if (userData?.role === 'admin') {
+        // Super Admin or Company Admin
+        router.push("/dashboard") 
+      } else {
+        router.push("/dashboard")
+      }
+      
+    } catch (err: any) {
+      setError(err.message || "Failed to sign in. Please check your credentials.")
+    } finally {
+      setLoading(false)
+    }
   }
-) {
-  const searchParams = await props.searchParams;
-  const message = searchParams.message as string | undefined;
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-sm">
-        <form action={login}>
-          <CardHeader>
-            <CardTitle className="text-2xl">Login</CardTitle>
-            <CardDescription>
-              Enter your email below to login to your account.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" placeholder="m@example.com" required autoComplete="off" />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" required autoComplete="new-password" />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button className="w-full" type="submit">Sign in</Button>
-            {message && (
-              <p className="p-4 bg-red-100 text-red-700 text-sm text-center rounded-md">
-                {message}
-              </p>
+    <div className="min-h-screen bg-[#020617] flex flex-col justify-center py-12 sm:px-6 lg:px-8 selection:bg-blue-500/30 selection:text-white relative overflow-hidden">
+      
+      {/* Background Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+        <div className="flex justify-center text-blue-500 mb-6">
+          <ShieldCheck className="w-16 h-16" />
+        </div>
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-white tracking-tight">
+          Sign in to QA Copilot
+        </h2>
+        <p className="mt-2 text-center text-sm text-gray-400">
+          Enterprise Audio Intelligence
+        </p>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+        <div className="bg-[#0B1120] py-8 px-4 shadow-2xl border border-gray-800/60 sm:rounded-2xl sm:px-10">
+          
+          <form className="space-y-6" onSubmit={handleLogin}>
+            
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-lg text-sm text-center">
+                {error}
+              </div>
             )}
-          </CardFooter>
-        </form>
-      </Card>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300">
+                Email address
+              </label>
+              <div className="mt-1">
+                <Input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-[#020617] border-gray-800 text-white focus:border-blue-500 focus:ring-blue-500/20 placeholder:text-gray-600"
+                  placeholder="manager@acme-bpo.com"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300">
+                Password
+              </label>
+              <div className="mt-1">
+                <Input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-[#020617] border-gray-800 text-white focus:border-blue-500 focus:ring-blue-500/20 placeholder:text-gray-600"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-800 rounded bg-[#020617]"
+                />
+                <label className="ml-2 block text-sm text-gray-400">
+                  Remember me
+                </label>
+              </div>
+
+              <div className="text-sm">
+                <a href="#" className="font-medium text-blue-500 hover:text-blue-400 transition-colors">
+                  Forgot password?
+                </a>
+              </div>
+            </div>
+
+            <div>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-[#0B1120] transition-colors"
+              >
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    <Key className="w-4 h-4 mr-2" />
+                    Sign in
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+          
+        </div>
+      </div>
     </div>
   )
 }

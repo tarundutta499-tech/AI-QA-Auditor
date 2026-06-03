@@ -1,7 +1,7 @@
 "use client"
 
 import FeatureCard from "@/components/shared/FeatureCard"
-import { Shield, Target, Zap, HeartPulse, AlertOctagon, LineChart } from "lucide-react"
+import { Shield, Target, Globe, HeartPulse, AlertOctagon, LineChart } from "lucide-react"
 
 export default function SolutionSection() {
   return (
@@ -26,9 +26,9 @@ export default function SolutionSection() {
             delay={0.2}
           />
           <FeatureCard 
-            icon={<Zap className="w-6 h-6 text-blue-400" />}
-            title="Instant Feedback"
-            description="Scores and actionable coaching notes delivered the exact moment a call or chat ends."
+            icon={<Globe className="w-6 h-6 text-blue-400" />}
+            title="Multi-Language Support"
+            description="Natively audits calls in Spanish, Tagalog, Hindi, French, and 90+ other global languages."
             delay={0.3}
           />
           <FeatureCard 

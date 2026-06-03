@@ -1,7 +1,6 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
-import { randomUUID } from 'crypto'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
@@ -18,7 +17,7 @@ export async function createAgent(formData: FormData) {
   const role = formData.get('role') as string || 'agent'
 
   const { error } = await supabase.from('users').insert({
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     company_id: dbUser.company_id,
     name,
     email,

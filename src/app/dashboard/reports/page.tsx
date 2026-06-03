@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { createBrowserClient } from '@supabase/ssr'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Loader2, TrendingUp, AlertTriangle, ShieldCheck, FileAudio, Eye } from "lucide-react"
+import { Loader2, TrendingUp, AlertTriangle, ShieldCheck, FileAudio, Eye, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Scorecard from "@/components/dashboard/Scorecard"
 
@@ -76,6 +76,52 @@ export default function ReportsPage() {
     ? Math.round(data.reduce((acc, curr) => acc + curr.compliance_score, 0) / data.length) 
     : 0
 
+  const downloadCSV = () => {
+    if (data.length === 0) return
+
+    // Create CSV Headers
+    const headers = ["Audit ID", "Date", "Agent Name", "Empathy Score", "Compliance Score", "Call Summary", "Fatal Errors"]
+    
+    // Add checklist headers if the first item has them
+    const hasChecklist = data[0].checklist && Array.isArray(data[0].checklist)
+    if (hasChecklist) {
+      data[0].checklist.forEach((item: any) => {
+        headers.push(`Checklist: ${item.parameter}`)
+        headers.push(`Reasoning: ${item.parameter}`)
+      })
+    }
+
+    const rows = data.map(audit => {
+      const row = [
+        audit.id,
+        audit.date,
+        audit.agent_name || 'Unknown',
+        audit.empathy_score,
+        audit.compliance_score,
+        `"${(audit.call_summary || '').replace(/"/g, '""')}"`,
+        `"${(audit.fatal_errors || []).join('; ').replace(/"/g, '""')}"`
+      ]
+
+      if (hasChecklist && audit.checklist) {
+        audit.checklist.forEach((item: any) => {
+          row.push(item.status)
+          row.push(`"${(item.reasoning || '').replace(/"/g, '""')}"`)
+        })
+      }
+
+      return row.join(",")
+    })
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n")
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement("a")
+    link.setAttribute("href", encodedUri)
+    link.setAttribute("download", `qa_audits_${new Date().toISOString().split('T')[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   if (selectedAudit) {
     // Reconstruct the data exactly how Scorecard.tsx expects it
     const scorecardData = {
@@ -103,9 +149,20 @@ export default function ReportsPage() {
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
       
-      <div>
-        <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Team Performance Analytics</h1>
-        <p className="text-muted-foreground">Historical QA data and AI grading trends.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Team Performance Analytics</h1>
+          <p className="text-muted-foreground">Historical QA data and AI grading trends.</p>
+        </div>
+        {data.length > 0 && (
+          <Button 
+            onClick={downloadCSV}
+            className="bg-green-600 hover:bg-green-500 text-white flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Export Raw Data (CSV)
+          </Button>
+        )}
       </div>
 
       {data.length === 0 ? (
@@ -203,6 +260,7 @@ export default function ReportsPage() {
                     <tr>
                       <th className="px-4 py-3">Call</th>
                       <th className="px-4 py-3">Date</th>
+                      <th className="px-4 py-3">Agent</th>
                       <th className="px-4 py-3">Empathy</th>
                       <th className="px-4 py-3">Compliance</th>
                       <th className="px-4 py-3">Summary</th>
@@ -214,6 +272,7 @@ export default function ReportsPage() {
                       <tr key={audit.id} className="border-b border-gray-800/50 hover:bg-gray-800/20 transition-colors">
                         <td className="px-4 py-4 font-medium text-white">Call {data.length - idx}</td>
                         <td className="px-4 py-4 text-gray-400">{audit.date}</td>
+                        <td className="px-4 py-4 font-semibold text-gray-300">{audit.agent_name || 'Unknown'}</td>
                         <td className="px-4 py-4">
                           <span className={`px-2 py-1 rounded-full text-xs font-semibold ${audit.empathy_score >= 80 ? 'bg-green-500/10 text-green-400' : 'bg-yellow-500/10 text-yellow-400'}`}>
                             {audit.empathy_score}%

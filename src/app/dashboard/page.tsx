@@ -1,188 +1,191 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import { createBrowserClient } from '@supabase/ssr'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { UploadCloud, FileAudio, Loader2, Sparkles } from "lucide-react"
-import Scorecard, { ScorecardData } from "@/components/dashboard/Scorecard"
-import { motion, AnimatePresence } from "framer-motion"
+import { Copy, CheckCircle2, FileAudio, Users, BarChart3, Activity } from "lucide-react"
+import Link from "next/link"
+import { motion } from "framer-motion"
 
 export default function DashboardPage() {
-  const [file, setFile] = useState<File | null>(null)
-  const [isUploading, setIsUploading] = useState(false)
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [scorecard, setScorecard] = useState<ScorecardData | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [copied, setCopied] = useState(false)
+  const [userName, setUserName] = useState("")
+  
+  // Dummy API key for demo
+  const apiKey = "qac_live_8f92j3n84m92834nj89f23"
+  const webhookUrl = "https://api.qacopilot.ai/v1/webhooks/genesys"
 
-  // Initialize Supabase client
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0])
-      setError(null)
-      setScorecard(null)
-    }
-  }
-
-  const handleAnalyze = async () => {
-    if (!file) return
-
-    try {
-      setIsUploading(true)
-      setError(null)
-      
-      // 1. Upload to Supabase Storage
-      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
-      
-      const { data: uploadData, error: uploadError } = await supabase
-        .storage
-        .from('calls')
-        .upload(fileName, file)
-
-      if (uploadError) {
-        throw new Error(`Upload failed: ${uploadError.message}. Make sure you created the 'calls' bucket!`)
+  useEffect(() => {
+    async function fetchUser() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data } = await supabase.from('users').select('name').eq('id', user.id).single()
+        if (data) setUserName(data.name || "Manager")
       }
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase
-        .storage
-        .from('calls')
-        .getPublicUrl(fileName)
-
-      setIsUploading(false)
-      setIsAnalyzing(true)
-
-      // 2. Send URL to our AI API
-      const response = await fetch('/api/analyze-call', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileUrl: publicUrl, fileName })
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to analyze call")
-      }
-
-      setScorecard(result.data)
-
-    } catch (err: any) {
-      console.error(err)
-      setError(err.message)
-    } finally {
-      setIsUploading(false)
-      setIsAnalyzing(false)
     }
+    fetchUser()
+  }, [])
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   return (
-    <div className="min-h-screen bg-[#020617] selection:bg-blue-500/30 selection:text-white flex flex-col">
-      <main className="flex-1 pt-12 pb-24">
-        <div className="max-w-4xl mx-auto px-6">
-          
-          <div className="mb-12">
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">Manual QA Auditor</h1>
-            <p className="text-gray-400">Upload an audio recording (.mp3, .wav, .m4a) to see the AI generate a scorecard instantly.</p>
-          </div>
+    <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+      
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+        <div>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Welcome back, {userName}</h1>
+          <p className="text-muted-foreground mt-2">Here is what is happening across your QA pipeline today.</p>
+        </div>
+        <div className="flex gap-3">
+          <Link href="/dashboard/reports">
+            <Button className="bg-blue-600 hover:bg-blue-500 text-white">View Analytics</Button>
+          </Link>
+        </div>
+      </div>
 
-          {/* Upload Zone */}
-          {!scorecard && (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-[#0B1120] border-2 border-dashed border-gray-700 rounded-3xl p-12 text-center relative hover:border-blue-500/50 transition-colors"
-            >
-              <input 
-                type="file" 
-                accept="audio/*" 
-                className="hidden" 
-                ref={fileInputRef}
-                onChange={handleFileSelect}
-              />
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="bg-[#0B1120] border-gray-800 shadow-xl">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-400">Total Calls Audited</CardTitle>
+            <FileAudio className="h-4 w-4 text-blue-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold text-white">1,284</div>
+            <p className="text-xs text-green-400 mt-2 flex items-center gap-1">
+               +12% from last week
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-[#0B1120] border-gray-800 shadow-xl">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-400">Avg Empathy</CardTitle>
+            <Activity className="h-4 w-4 text-green-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold text-white">88%</div>
+            <p className="text-xs text-green-400 mt-2 flex items-center gap-1">
+               +2% from last week
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-[#0B1120] border-gray-800 shadow-xl">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-400">Avg Compliance</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-blue-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold text-white">96%</div>
+            <p className="text-xs text-green-400 mt-2 flex items-center gap-1">
+               Perfect score target
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-[#0B1120] border-gray-800 shadow-xl">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-400">Active Agents</CardTitle>
+            <Users className="h-4 w-4 text-purple-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold text-white">42</div>
+            <p className="text-xs text-muted-foreground mt-2">
+               Agents currently live
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+        
+        {/* Telephony Integration Webhook Instructions */}
+        <div className="lg:col-span-2">
+          <Card className="bg-[#0B1120] border-gray-800 h-full">
+            <CardHeader>
+              <CardTitle className="text-xl text-white">Telephony Integrations (Webhooks)</CardTitle>
+              <CardDescription>
+                Connect QA Copilot directly to your phone system (Genesys, Twilio, Amazon Connect). 
+                Once connected, calls will be automatically audited by AI the second the customer hangs up.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
               
-              {!file ? (
-                <div className="flex flex-col items-center">
-                  <div className="w-20 h-20 bg-[#020617] rounded-full flex items-center justify-center mb-6 shadow-lg border border-gray-800">
-                    <UploadCloud className="w-10 h-10 text-blue-400" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">Select an audio file</h3>
-                  <p className="text-gray-500 mb-8 max-w-sm">Upload a mock customer service call to test the AI grading engine.</p>
-                  <Button 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-8"
-                  >
-                    Browse Files
+              <div className="bg-gray-900/50 p-4 rounded-xl border border-gray-800">
+                <div className="text-sm font-medium text-gray-400 mb-2">Your Production Webhook URL</div>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-[#020617] p-3 rounded-lg text-green-400 font-mono text-sm border border-gray-800">
+                    {webhookUrl}
+                  </code>
+                  <Button variant="outline" className="border-gray-700 hover:bg-gray-800" onClick={() => copyToClipboard(webhookUrl)}>
+                    {copied ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4 text-gray-400" />}
                   </Button>
                 </div>
-              ) : (
-                <div className="flex flex-col items-center">
-                  <div className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mb-6 border border-blue-500/30">
-                    <FileAudio className="w-10 h-10 text-blue-400" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">{file.name}</h3>
-                  <p className="text-gray-500 mb-8">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                  
-                  <div className="flex gap-4">
-                    <Button 
-                      onClick={() => setFile(null)}
-                      variant="ghost"
-                      className="text-gray-400 hover:text-white"
-                      disabled={isUploading || isAnalyzing}
-                    >
-                      Cancel
-                    </Button>
-                    <Button 
-                      onClick={handleAnalyze}
-                      disabled={isUploading || isAnalyzing}
-                      className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-8 flex items-center gap-2 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
-                    >
-                      {isUploading && <Loader2 className="w-4 h-4 animate-spin" />}
-                      {isAnalyzing && <Sparkles className="w-4 h-4 animate-pulse" />}
-                      {!isUploading && !isAnalyzing && <Sparkles className="w-4 h-4" />}
-                      {isUploading ? "Uploading to Cloud..." : isAnalyzing ? "AI is Analyzing..." : "Run AI Audit"}
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {error && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full max-w-md px-4">
-                  <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-lg">
-                    {error}
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {/* Results Area */}
-          <AnimatePresence>
-            {scorecard && (
-              <div className="space-y-6">
-                <Button 
-                  onClick={() => {
-                    setScorecard(null)
-                    setFile(null)
-                  }}
-                  variant="outline"
-                  className="border-gray-700 text-gray-300 hover:text-white"
-                >
-                  ← Audit Another Call
-                </Button>
-                
-                <Scorecard data={scorecard} />
               </div>
-            )}
-          </AnimatePresence>
 
+              <div className="bg-gray-900/50 p-4 rounded-xl border border-gray-800">
+                <div className="text-sm font-medium text-gray-400 mb-2">Secret API Key</div>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-[#020617] p-3 rounded-lg text-blue-400 font-mono text-sm border border-gray-800">
+                    ••••••••••••••••••••••••••••
+                  </code>
+                  <Button variant="outline" className="border-gray-700 hover:bg-gray-800">
+                    Reveal Key
+                  </Button>
+                </div>
+              </div>
+
+              <div className="pt-4 text-sm text-gray-500">
+                <p>Read the <Link href="#" className="text-blue-400 hover:underline">Documentation</Link> for instructions on configuring the webhook in your specific PBX system.</p>
+              </div>
+
+            </CardContent>
+          </Card>
         </div>
-      </main>
+
+        {/* Quick Links */}
+        <div className="space-y-6">
+          <Card className="bg-gradient-to-br from-blue-900/20 to-purple-900/20 border-blue-500/20 h-full">
+            <CardHeader>
+              <CardTitle className="text-white text-lg">Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Link href="/dashboard/reports" className="block">
+                <div className="p-4 rounded-xl bg-gray-900/40 border border-gray-800 hover:bg-gray-800 transition-colors flex items-center gap-4 group">
+                  <div className="p-3 bg-blue-500/10 rounded-lg group-hover:bg-blue-500/20 transition-colors">
+                    <BarChart3 className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-white">Generate Reports</h3>
+                    <p className="text-xs text-gray-400">Export CSV data for clients</p>
+                  </div>
+                </div>
+              </Link>
+
+              <Link href="/dashboard/agents" className="block">
+                <div className="p-4 rounded-xl bg-gray-900/40 border border-gray-800 hover:bg-gray-800 transition-colors flex items-center gap-4 group">
+                  <div className="p-3 bg-purple-500/10 rounded-lg group-hover:bg-purple-500/20 transition-colors">
+                    <Users className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-white">Manage Team</h3>
+                    <p className="text-xs text-gray-400">Add or remove QA analysts</p>
+                  </div>
+                </div>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+
+      </div>
     </div>
   )
 }

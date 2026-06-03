@@ -19,12 +19,74 @@ You MUST return your analysis as a strict, raw JSON object. Do NOT include markd
   "complianceScore": <number between 0 and 100>,
   "fatalErrors": [<array of strings containing any severe compliance violations like swearing, hanging up, or exposing PII. Empty array if none>],
   "coachingNotes": [<array of 3 specific, actionable coaching tips for the agent>],
-  "callSummary": "<A clear 2-sentence summary of what the customer wanted and if it was resolved>"
+  "callSummary": "<A clear 2-sentence summary of what the customer wanted and if it was resolved>",
+  "checklist": [
+    {
+      "parameter": "Call Opening (Standard greeting used)",
+      "status": "<Yes, No, or NA>",
+      "reasoning": "<Short 1 sentence explanation>"
+    },
+    {
+      "parameter": "Company Branding Mentioned",
+      "status": "<Yes, No, or NA>",
+      "reasoning": "<Short 1 sentence explanation>"
+    },
+    {
+      "parameter": "Customer Authentication (Verified Name/Account)",
+      "status": "<Yes, No, or NA>",
+      "reasoning": "<Short 1 sentence explanation>"
+    },
+    {
+      "parameter": "Active Listening & Empathy Demonstrated",
+      "status": "<Yes, No, or NA>",
+      "reasoning": "<Short 1 sentence explanation>"
+    },
+    {
+      "parameter": "Professional Tone & Politeness",
+      "status": "<Yes, No, or NA>",
+      "reasoning": "<Short 1 sentence explanation>"
+    },
+    {
+      "parameter": "Avoided Dead Air / Managed Hold Time",
+      "status": "<Yes, No, or NA>",
+      "reasoning": "<Short 1 sentence explanation>"
+    },
+    {
+      "parameter": "Accurate Information Provided",
+      "status": "<Yes, No, or NA>",
+      "reasoning": "<Short 1 sentence explanation>"
+    },
+    {
+      "parameter": "First Call Resolution (FCR) Achieved",
+      "status": "<Yes, No, or NA>",
+      "reasoning": "<Short 1 sentence explanation>"
+    },
+    {
+      "parameter": "Required Disclosures Stated",
+      "status": "<Yes, No, or NA>",
+      "reasoning": "<Short 1 sentence explanation>"
+    },
+    {
+      "parameter": "No Personally Identifiable Information (PII) Exposed",
+      "status": "<Yes, No, or NA>",
+      "reasoning": "<Short 1 sentence explanation>"
+    },
+    {
+      "parameter": "Offered Additional Assistance",
+      "status": "<Yes, No, or NA>",
+      "reasoning": "<Short 1 sentence explanation>"
+    },
+    {
+      "parameter": "Proper Call Closing (Thanked customer)",
+      "status": "<Yes, No, or NA>",
+      "reasoning": "<Short 1 sentence explanation>"
+    }
+  ]
 }`
 
 export async function POST(req: Request) {
   try {
-    const { fileUrl } = await req.json()
+    const { fileUrl, agentName } = await req.json()
 
     if (!fileUrl) {
       return NextResponse.json({ success: false, error: "No file URL provided" }, { status: 400 })
@@ -85,11 +147,13 @@ export async function POST(req: Request) {
       .from('demo_scorecards')
       .insert({
         audio_url: fileUrl,
+        agent_name: agentName || 'Unknown Agent',
         empathy_score: scorecardData.empathyScore,
         compliance_score: scorecardData.complianceScore,
         fatal_errors: scorecardData.fatalErrors,
         coaching_notes: scorecardData.coachingNotes,
-        call_summary: scorecardData.callSummary
+        call_summary: scorecardData.callSummary,
+        checklist: scorecardData.checklist
       })
 
     if (dbError) {
