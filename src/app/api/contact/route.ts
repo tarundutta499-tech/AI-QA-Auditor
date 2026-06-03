@@ -50,7 +50,7 @@ export async function POST(request: Request) {
       to: recipientEmail,
       subject: `New Demo Request: ${company}`,
       html: emailHtml,
-      reply_to: email // Allows you to hit 'Reply' and email the customer directly
+      replyTo: email // Allows you to hit 'Reply' and email the customer directly
     })
 
     if (error) {
