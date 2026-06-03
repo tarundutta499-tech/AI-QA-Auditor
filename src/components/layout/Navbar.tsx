@@ -31,6 +31,7 @@ export default function Navbar() {
           <Link href="/#how-it-works" className="hover:text-white transition-colors">How It Works</Link>
           <Link href="/#pricing" className="hover:text-white transition-colors">Pricing</Link>
           <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
+          <Link href="/dashboard" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">AI Dashboard</Link>
         </div>
 
         {/* Desktop CTAs */}
@@ -63,6 +64,7 @@ export default function Navbar() {
           <Link href="/#how-it-works" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">How It Works</Link>
           <Link href="/#pricing" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">Pricing</Link>
           <Link href="/contact" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">Contact</Link>
+          <Link href="/dashboard" onClick={() => setIsOpen(false)} className="text-blue-400 hover:text-blue-300 font-semibold">AI Dashboard</Link>
           <hr className="border-gray-800 my-4" />
           <Link href="/login" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">Login</Link>
           <Link href="/contact" onClick={() => setIsOpen(false)}>

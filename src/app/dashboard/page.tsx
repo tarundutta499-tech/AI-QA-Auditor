@@ -1,125 +1,188 @@
-import { createClient } from '@/utils/supabase/server'
-import { redirect } from 'next/navigation'
-import { Phone, Activity, ShieldCheck, AlertTriangle } from 'lucide-react'
+"use client"
 
-export default async function DashboardPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+import { useState, useRef } from "react"
+import { createBrowserClient } from '@supabase/ssr'
+import { Button } from "@/components/ui/button"
+import { UploadCloud, FileAudio, Loader2, Sparkles } from "lucide-react"
+import Scorecard, { ScorecardData } from "@/components/dashboard/Scorecard"
+import { motion, AnimatePresence } from "framer-motion"
 
-  if (!user) redirect('/login')
+export default function DashboardPage() {
+  const [file, setFile] = useState<File | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [scorecard, setScorecard] = useState<ScorecardData | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  let dbUser = (await supabase.from('users').select('*').eq('id', user.id).single()).data
+  // Initialize Supabase client
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 
-  if (!dbUser) {
-    const { data: company } = await supabase.from('companies').insert({ name: 'My Company' }).select().single()
-    if (company) {
-       const { data: newUser } = await supabase.from('users').insert({
-         id: user.id,
-         company_id: company.id,
-         role: 'admin',
-         name: user.email?.split('@')[0] || 'Admin',
-         email: user.email
-       }).select().single()
-       dbUser = newUser
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0])
+      setError(null)
+      setScorecard(null)
     }
   }
 
-  if (!dbUser) return <div className="p-8">Failed to initialize user. Please try refreshing.</div>
+  const handleAnalyze = async () => {
+    if (!file) return
 
-  const { count: totalCalls } = await supabase.from('calls').select('*', { count: 'exact', head: true }).eq('company_id', dbUser.company_id)
-  
-  const { data: companyAudits } = await supabase
-    .from('audits')
-    .select('overall_score, compliance_percent, calls!inner(company_id)')
-    .eq('calls.company_id', dbUser.company_id)
+    try {
+      setIsUploading(true)
+      setError(null)
+      
+      // 1. Upload to Supabase Storage
+      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+      
+      const { data: uploadData, error: uploadError } = await supabase
+        .storage
+        .from('calls')
+        .upload(fileName, file)
 
-  let avgScore = 0
-  let avgCompliance = 0
-  if (companyAudits && companyAudits.length > 0) {
-    avgScore = Math.round(companyAudits.reduce((acc, a) => acc + (a.overall_score || 0), 0) / companyAudits.length)
-    avgCompliance = Math.round(companyAudits.reduce((acc, a) => acc + (a.compliance_percent || 0), 0) / companyAudits.length)
+      if (uploadError) {
+        throw new Error(`Upload failed: ${uploadError.message}. Make sure you created the 'calls' bucket!`)
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase
+        .storage
+        .from('calls')
+        .getPublicUrl(fileName)
+
+      setIsUploading(false)
+      setIsAnalyzing(true)
+
+      // 2. Send URL to our AI API
+      const response = await fetch('/api/analyze-call', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileUrl: publicUrl, fileName })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to analyze call")
+      }
+
+      setScorecard(result.data)
+
+    } catch (err: any) {
+      console.error(err)
+      setError(err.message)
+    } finally {
+      setIsUploading(false)
+      setIsAnalyzing(false)
+    }
   }
 
-  const coachingOpportunities = companyAudits ? companyAudits.filter(a => (a.overall_score || 0) < 80).length : 0
-
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-foreground">
-            Welcome back, <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">{dbUser.name}</span>
-          </h1>
-          <p className="text-muted-foreground mt-2 text-lg">Here is your daily quality assurance overview.</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#020617] selection:bg-blue-500/30 selection:text-white flex flex-col">
+      <main className="flex-1 pt-12 pb-24">
+        <div className="max-w-4xl mx-auto px-6">
+          
+          <div className="mb-12">
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">Manual QA Auditor</h1>
+            <p className="text-gray-400">Upload an audio recording (.mp3, .wav, .m4a) to see the AI generate a scorecard instantly.</p>
+          </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <div className="group relative rounded-2xl border border-border/50 bg-background/50 backdrop-blur-sm p-6 overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-500/30">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <div className="relative flex flex-row items-center justify-between space-y-0 pb-4">
-            <h3 className="tracking-tight text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">Total Audits</h3>
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/5 border border-indigo-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-              <Phone className="h-5 w-5 text-indigo-500 drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
-            </div>
-          </div>
-          <div className="relative pt-0">
-            <div className="text-3xl font-bold">{totalCalls || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">+12% from last week</p>
-          </div>
-        </div>
-        
-        <div className="group relative rounded-2xl border border-border/50 bg-background/50 backdrop-blur-sm p-6 overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-emerald-500/10 hover:border-emerald-500/30">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <div className="relative flex flex-row items-center justify-between space-y-0 pb-4">
-            <h3 className="tracking-tight text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">Average QA Score</h3>
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 border border-emerald-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-              <Activity className="h-5 w-5 text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-            </div>
-          </div>
-          <div className="relative pt-0">
-            <div className="text-3xl font-bold">{avgScore}</div>
-            <p className="text-xs text-muted-foreground mt-1">Across all scorecards</p>
-          </div>
-        </div>
-        
-        <div className="group relative rounded-2xl border border-border/50 bg-background/50 backdrop-blur-sm p-6 overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-500/30">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <div className="relative flex flex-row items-center justify-between space-y-0 pb-4">
-            <h3 className="tracking-tight text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">Compliance %</h3>
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-500/5 border border-blue-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-              <ShieldCheck className="h-5 w-5 text-blue-500 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-            </div>
-          </div>
-          <div className="relative pt-0">
-            <div className="text-3xl font-bold">{avgCompliance}%</div>
-            <p className="text-xs text-muted-foreground mt-1">Regulatory compliance</p>
-          </div>
-        </div>
-        
-        <div className="group relative rounded-2xl border border-border/50 bg-background/50 backdrop-blur-sm p-6 overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-rose-500/10 hover:border-rose-500/30">
-          <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <div className="relative flex flex-row items-center justify-between space-y-0 pb-4">
-            <h3 className="tracking-tight text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">Coaching Needed</h3>
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-rose-500/20 to-rose-500/5 border border-rose-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-              <AlertTriangle className="h-5 w-5 text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
-            </div>
-          </div>
-          <div className="relative pt-0">
-            <div className="text-3xl font-bold">{coachingOpportunities}</div>
-            <p className="text-xs text-muted-foreground mt-1">Calls scoring &lt; 80</p>
-          </div>
-        </div>
-      </div>
+          {/* Upload Zone */}
+          {!scorecard && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-[#0B1120] border-2 border-dashed border-gray-700 rounded-3xl p-12 text-center relative hover:border-blue-500/50 transition-colors"
+            >
+              <input 
+                type="file" 
+                accept="audio/*" 
+                className="hidden" 
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+              />
+              
+              {!file ? (
+                <div className="flex flex-col items-center">
+                  <div className="w-20 h-20 bg-[#020617] rounded-full flex items-center justify-center mb-6 shadow-lg border border-gray-800">
+                    <UploadCloud className="w-10 h-10 text-blue-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">Select an audio file</h3>
+                  <p className="text-gray-500 mb-8 max-w-sm">Upload a mock customer service call to test the AI grading engine.</p>
+                  <Button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-8"
+                  >
+                    Browse Files
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center">
+                  <div className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mb-6 border border-blue-500/30">
+                    <FileAudio className="w-10 h-10 text-blue-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">{file.name}</h3>
+                  <p className="text-gray-500 mb-8">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                  
+                  <div className="flex gap-4">
+                    <Button 
+                      onClick={() => setFile(null)}
+                      variant="ghost"
+                      className="text-gray-400 hover:text-white"
+                      disabled={isUploading || isAnalyzing}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleAnalyze}
+                      disabled={isUploading || isAnalyzing}
+                      className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-8 flex items-center gap-2 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+                    >
+                      {isUploading && <Loader2 className="w-4 h-4 animate-spin" />}
+                      {isAnalyzing && <Sparkles className="w-4 h-4 animate-pulse" />}
+                      {!isUploading && !isAnalyzing && <Sparkles className="w-4 h-4" />}
+                      {isUploading ? "Uploading to Cloud..." : isAnalyzing ? "AI is Analyzing..." : "Run AI Audit"}
+                    </Button>
+                  </div>
+                </div>
+              )}
 
-      <div className="mt-8 rounded-2xl border border-border/50 bg-background/50 backdrop-blur-md shadow-lg overflow-hidden transition-all hover:shadow-xl">
-        <div className="p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
-          <h3 className="font-semibold text-lg">Recent Audits</h3>
-          <p className="text-sm text-muted-foreground">Your most recently completed AI audits.</p>
+              {error && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full max-w-md px-4">
+                  <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-lg">
+                    {error}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* Results Area */}
+          <AnimatePresence>
+            {scorecard && (
+              <div className="space-y-6">
+                <Button 
+                  onClick={() => {
+                    setScorecard(null)
+                    setFile(null)
+                  }}
+                  variant="outline"
+                  className="border-gray-700 text-gray-300 hover:text-white"
+                >
+                  ← Audit Another Call
+                </Button>
+                
+                <Scorecard data={scorecard} />
+              </div>
+            )}
+          </AnimatePresence>
+
         </div>
-        <div className="p-6 text-center text-muted-foreground text-sm">
-          {totalCalls === 0 ? "No audits performed yet. Upload a call to see it here." : "View the Audits tab to see detailed reports."}
-        </div>
-      </div>
+      </main>
     </div>
   )
 }
