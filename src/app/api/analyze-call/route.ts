@@ -1,8 +1,14 @@
 import { GoogleGenAI } from '@google/genai'
 import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
 // Initialize the new Google Gen AI SDK
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+
+// Initialize Supabase admin client for backend operations
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabase = createClient(supabaseUrl, supabaseKey)
 
 const SYSTEM_SOP = `You are an expert QA Manager at an enterprise BPO. Your job is to strictly audit the attached customer service call recording.
 Grade the agent's performance against standard compliance and empathy metrics.
@@ -73,6 +79,23 @@ export async function POST(req: Request) {
     const cleanedJson = resultText.replace(/```json/gi, '').replace(/```/g, '').trim()
     
     const scorecardData = JSON.parse(cleanedJson)
+
+    console.log("4. Saving scorecard to Supabase Database...")
+    const { error: dbError } = await supabase
+      .from('demo_scorecards')
+      .insert({
+        audio_url: fileUrl,
+        empathy_score: scorecardData.empathyScore,
+        compliance_score: scorecardData.complianceScore,
+        fatal_errors: scorecardData.fatalErrors,
+        coaching_notes: scorecardData.coachingNotes,
+        call_summary: scorecardData.callSummary
+      })
+
+    if (dbError) {
+      console.error("Database save error (non-fatal):", dbError)
+      // We still return success to the user so the demo works, but log the error
+    }
 
     return NextResponse.json({ success: true, data: scorecardData }, { status: 200 })
 
