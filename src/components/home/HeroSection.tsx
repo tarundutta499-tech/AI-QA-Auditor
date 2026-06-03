@@ -191,14 +191,9 @@ export default function HeroSection() {
         transition={{ duration: 1, delay: 0.8 }}
         className="mt-24 pt-10 border-t border-gray-800/50 w-full max-w-7xl mx-auto px-6 text-center"
       >
-        <p className="text-sm text-gray-500 uppercase tracking-widest font-semibold mb-8">Trusted by QA teams at</p>
-        <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-          <div className="text-xl font-bold text-white">AcmeCorp</div>
-          <div className="text-xl font-bold text-white">TechSupport.io</div>
-          <div className="text-xl font-bold text-white">GlobalBPO</div>
-          <div className="text-xl font-bold text-white">OmniChannel</div>
-          <div className="text-xl font-bold text-white">Stratos</div>
-        </div>
+        <p className="text-lg md:text-xl text-gray-400 font-medium max-w-3xl mx-auto">
+          Transform your quality assurance. Automate 100% of your interactions, enforce strict compliance, and deliver world-class support with QA Copilot.
+        </p>
       </motion.div>
     </section>
   )
