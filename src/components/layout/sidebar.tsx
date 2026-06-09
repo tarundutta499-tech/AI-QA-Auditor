@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, BarChart3, Settings, LogOut, ListChecks, FileText, Activity, Upload, BookOpen } from 'lucide-react'
+import { Home, Users, BarChart3, Settings, LogOut, ListChecks, FileText, Activity, Upload, BookOpen, AlertTriangle, Scale } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { signout } from '@/app/login/actions'
 import { cn } from '@/lib/utils'
@@ -16,6 +16,8 @@ export function Sidebar() {
     { label: 'Analytics & Reports', href: '/dashboard/reports', icon: BarChart3 },
     { label: 'Scorecards', href: '/dashboard/scorecards', icon: ListChecks },
     { label: 'Knowledge Base', href: '/dashboard/knowledge', icon: BookOpen },
+    { label: 'DSAT Analysis', href: '/dashboard/dsat', icon: AlertTriangle },
+    { label: 'Calibrations', href: '/dashboard/calibrations', icon: Scale },
     { label: 'Team Members', href: '/dashboard/agents', icon: Users },
     { label: 'Settings', href: '/dashboard/settings', icon: Settings },
   ]

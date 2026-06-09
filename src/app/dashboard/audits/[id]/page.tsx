@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { CheckCircle2, XCircle } from 'lucide-react'
+import { CalibrationButton } from '@/components/CalibrationButton'
 
 export default async function AuditResultPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params
@@ -27,9 +28,12 @@ export default async function AuditResultPage(props: { params: Promise<{ id: str
             Agent: {audit.calls?.users?.name} | Scorecard: {audit.scorecards?.name}
           </p>
         </div>
-        <div className="text-right">
-          <div className="text-4xl font-bold text-primary">{audit.compliance_percent}%</div>
-          <div className="text-sm text-muted-foreground">Raw Score: {audit.overall_score}</div>
+        <div className="flex items-center gap-6">
+          <div className="text-right">
+            <div className="text-4xl font-bold text-primary">{audit.compliance_percent}%</div>
+            <div className="text-sm text-muted-foreground">Raw Score: {audit.overall_score}</div>
+          </div>
+          <CalibrationButton auditId={id} aiScore={audit.compliance_percent} />
         </div>
       </div>
 
