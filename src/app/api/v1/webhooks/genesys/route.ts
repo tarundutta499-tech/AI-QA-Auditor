@@ -97,10 +97,10 @@ export async function POST(req: Request) {
     const mimeType = audio_url.toLowerCase().endsWith('.wav') ? 'audio/wav' : 
                      audio_url.toLowerCase().endsWith('.m4a') ? 'audio/m4a' : 'audio/mp3'
 
-    console.log(`[WEBHOOK] Audio downloaded. Sending to Gemini 1.5 Flash...`)
+    console.log(`[WEBHOOK] Audio downloaded. Sending to Gemini and Deepgram...`)
     
-    // 4. Run AI Analysis
-    const response = await ai.models.generateContent({
+    // 4. Run AI Analysis & Transcription in Parallel
+    const geminiPromise = ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [
         {
@@ -120,6 +120,20 @@ export async function POST(req: Request) {
         temperature: 0.0,
       }
     })
+
+    const deepgramPromise = fetch('https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true&diarize=true', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Token ${process.env.DEEPGRAM_API_KEY || 'placeholder_key'}`,
+        'Content-Type': mimeType,
+      },
+      body: arrayBuffer
+    }).then(res => res.json()).catch(err => {
+      console.error("[WEBHOOK] Deepgram error:", err)
+      return null
+    })
+
+    const [response, deepgramResult] = await Promise.all([geminiPromise, deepgramPromise])
 
     const resultText = response.text
     if (!resultText) {
@@ -164,6 +178,20 @@ export async function POST(req: Request) {
       })
 
     if (auditError) throw new Error(`Database error (audits): ${auditError.message}`)
+
+    // C. Create the Transcript record
+    if (deepgramResult && deepgramResult.channels) {
+      const { error: transcriptError } = await supabase
+        .from('transcripts')
+        .insert({
+          call_id: callData.id,
+          content: deepgramResult
+        })
+      
+      if (transcriptError) {
+        console.error(`[WEBHOOK] Database error (transcripts): ${transcriptError.message}`)
+      }
+    }
 
     console.log(`[WEBHOOK] Successfully processed and ingested call ${callData.id}.`)
 

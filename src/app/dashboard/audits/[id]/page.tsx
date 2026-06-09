@@ -19,6 +19,14 @@ export default async function AuditResultPage(props: { params: Promise<{ id: str
 
   const { data: transcript } = await supabase.from('transcripts').select('*').eq('call_id', audit.call_id).single()
 
+  let utterances: any[] = []
+  try {
+    const paragraphs = transcript?.content?.results?.channels?.[0]?.alternatives?.[0]?.paragraphs?.paragraphs
+    if (paragraphs && Array.isArray(paragraphs)) {
+      utterances = paragraphs
+    }
+  } catch (e) {}
+
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
@@ -70,14 +78,26 @@ export default async function AuditResultPage(props: { params: Promise<{ id: str
             <CardHeader>
               <CardTitle>Call Transcript</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 max-h-[500px] overflow-y-auto">
-              {transcript?.content?.map((line: any, idx: number) => (
-                <div key={idx} className="flex gap-4 text-sm">
-                  <span className="text-xs text-muted-foreground w-12 shrink-0">{line.timestamp}</span>
-                  <span className="font-semibold w-20 shrink-0">{line.speaker}:</span>
-                  <span>{line.text}</span>
+            <CardContent className="space-y-4 max-h-[500px] overflow-y-auto bg-[#020617] p-4 rounded-b-xl border-t border-gray-800">
+              {utterances.length > 0 ? utterances.map((para: any, idx: number) => (
+                <div key={idx} className={`flex flex-col gap-1 ${para.speaker === 0 ? 'items-end' : 'items-start'}`}>
+                  <span className="text-xs text-muted-foreground px-1">
+                    {para.speaker === 0 ? 'Agent' : 'Customer'} • {Math.round(para.start)}s
+                  </span>
+                  <div className={`p-3 text-sm rounded-2xl max-w-[80%] ${
+                    para.speaker === 0 
+                      ? 'bg-blue-600 text-white rounded-tr-sm' 
+                      : 'bg-gray-800 text-gray-100 rounded-tl-sm border border-gray-700'
+                  }`}>
+                    {para.sentences?.map((s: any) => s.text).join(' ')}
+                  </div>
                 </div>
-              ))}
+              )) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center h-full">
+                  <p className="text-muted-foreground mb-2">Transcript is generating or unavailable.</p>
+                  <p className="text-xs text-gray-500">Audio files under 10 seconds may not generate a full transcript.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
