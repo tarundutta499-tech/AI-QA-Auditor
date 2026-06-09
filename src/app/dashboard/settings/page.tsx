@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { ApiKeyManager } from '@/components/settings/api-key-manager'
+import { SmtpManager } from '@/components/settings/smtp-manager'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -68,6 +69,20 @@ export default async function SettingsPage() {
             />
           </CardContent>
         </Card>
+
+        <SmtpManager 
+          companyId={dbUser?.companies?.id || ''}
+          isAdmin={dbUser?.role === 'admin'}
+          initialData={{
+            smtp_host: dbUser?.companies?.smtp_host,
+            smtp_port: dbUser?.companies?.smtp_port,
+            smtp_user: dbUser?.companies?.smtp_user,
+            smtp_pass: dbUser?.companies?.smtp_pass,
+            smtp_from_email: dbUser?.companies?.smtp_from_email,
+            alert_threshold: dbUser?.companies?.alert_threshold,
+            escalation_email: dbUser?.companies?.escalation_email
+          }}
+        />
       </div>
     </div>
   )

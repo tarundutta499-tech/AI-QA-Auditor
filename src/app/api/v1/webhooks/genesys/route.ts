@@ -1,6 +1,7 @@
 import { GoogleGenAI } from '@google/genai'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import nodemailer from 'nodemailer'
 
 // Initialize the new Google Gen AI SDK
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
@@ -157,7 +158,72 @@ export async function POST(req: Request) {
 
     console.log(`[WEBHOOK] Successfully processed and ingested call ${callData.id}.`)
 
-    // 6. Return Success to Telephony System
+    // 6. Check Alert Threshold and Send Custom SMTP Email
+    try {
+      const { data: companySettings } = await supabase
+        .from('companies')
+        .select('smtp_host, smtp_port, smtp_user, smtp_pass, smtp_from_email, alert_threshold, escalation_email')
+        .eq('id', company_id)
+        .single()
+
+      if (companySettings && companySettings.smtp_host) {
+        const threshold = companySettings.alert_threshold || 80
+        const overallScore = scorecardData.complianceScore
+        
+        if (overallScore < threshold) {
+          // Fetch agent email if we have agent_id
+          let agentEmail = null
+          if (agent_id) {
+            const { data: agentData } = await supabase.from('users').select('email').eq('id', agent_id).single()
+            if (agentData) agentEmail = agentData.email
+          }
+          
+          const recipients = []
+          if (agentEmail) recipients.push(agentEmail)
+          if (companySettings.escalation_email) recipients.push(companySettings.escalation_email)
+
+          if (recipients.length > 0) {
+            const transporter = nodemailer.createTransport({
+              host: companySettings.smtp_host,
+              port: companySettings.smtp_port || 587,
+              secure: companySettings.smtp_port === 465,
+              auth: {
+                user: companySettings.smtp_user,
+                pass: companySettings.smtp_pass
+              }
+            })
+
+            const htmlContent = `
+              <h2>⚠️ Critical QA Alert: Call Scored Below Threshold</h2>
+              <p>A recent call audited by AI has scored below the acceptable threshold of ${threshold}%.</p>
+              <ul>
+                <li><strong>Client:</strong> ${client_name || 'Unknown'}</li>
+                <li><strong>Compliance Score:</strong> ${overallScore}%</li>
+                <li><strong>Empathy Score:</strong> ${scorecardData.empathyScore || 'N/A'}/100</li>
+              </ul>
+              <h3>AI Coaching Notes:</h3>
+              <ul>
+                ${scorecardData.coachingNotes.map((note: string) => `<li>${note}</li>`).join('')}
+              </ul>
+              <p>Please log in to the QA Copilot Dashboard to review the full audit.</p>
+            `
+
+            await transporter.sendMail({
+              from: companySettings.smtp_from_email || '"QA Alerts" <alerts@yourcompany.com>',
+              to: recipients.join(', '),
+              subject: `QA Alert: Low Score Detected (${overallScore}%)`,
+              html: htmlContent
+            })
+            console.log(`[WEBHOOK] Alert email dispatched to ${recipients.join(', ')}`)
+          }
+        }
+      }
+    } catch (emailError) {
+      console.error("[WEBHOOK] Failed to send SMTP email:", emailError)
+      // We don't fail the webhook if the email fails
+    }
+
+    // 7. Return Success to Telephony System
     return NextResponse.json({ 
       success: true, 
       call_id: callData.id,

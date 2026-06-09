@@ -1,10 +1,21 @@
 -- Schema for QA Copilot
 
 -- 1. companies
-CREATE TABLE public.companies (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+CREATE TABLE IF NOT EXISTS public.companies (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::TEXT, NOW()) NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    api_key TEXT UNIQUE,
+    api_key_created_at TIMESTAMP WITH TIME ZONE,
+    
+    -- Multi-tenant Email Alerts Configuration
+    smtp_host TEXT,
+    smtp_port INTEGER,
+    smtp_user TEXT,
+    smtp_pass TEXT,
+    smtp_from_email TEXT,
+    alert_threshold INTEGER DEFAULT 80,
+    escalation_email TEXT
 );
 
 -- 2. users (extends Supabase Auth users)
