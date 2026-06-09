@@ -15,7 +15,13 @@ CREATE TABLE IF NOT EXISTS public.companies (
     smtp_pass TEXT,
     smtp_from_email TEXT,
     alert_threshold INTEGER DEFAULT 80,
-    escalation_email TEXT
+    escalation_email TEXT,
+
+    -- Stripe Subscription Fields
+    stripe_customer_id TEXT,
+    stripe_subscription_id TEXT,
+    subscription_status TEXT DEFAULT 'inactive',
+    subscription_tier TEXT DEFAULT 'free'
 );
 
 -- 2. users (extends Supabase Auth users)

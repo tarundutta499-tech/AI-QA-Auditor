@@ -1,9 +1,10 @@
 "use client"
 
+import { useState } from "react"
 import { motion } from "framer-motion"
-import { Check } from "lucide-react"
+import { Check, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 interface PricingCardProps {
   tier: string
@@ -17,10 +18,48 @@ interface PricingCardProps {
 }
 
 export default function PricingCard({ tier, price, description, features, isPopular, ctaText, delay = 0, isAnnual = false }: PricingCardProps) {
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+
   // Apply 20% discount visually if annual is toggled
   const displayPrice = isAnnual && price !== "Custom" 
     ? `₹${(parseInt(price.replace(/,/g, '').replace('₹', '')) * 0.8).toLocaleString()}` 
     : price
+
+  const handleSubscribe = async () => {
+    if (price === "Custom") {
+      router.push('/contact')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tier: tier })
+      })
+
+      if (res.status === 401) {
+        // Not logged in, redirect to login
+        router.push('/login?redirect=/pricing')
+        return
+      }
+
+      const data = await res.json()
+      
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        alert("Failed to start checkout: " + (data.error || "Unknown error"))
+        setLoading(false)
+      }
+    } catch (err) {
+      console.error(err)
+      alert("Something went wrong.")
+      setLoading(false)
+    }
+  }
 
   return (
     <motion.div
@@ -59,17 +98,17 @@ export default function PricingCard({ tier, price, description, features, isPopu
         ))}
       </ul>
 
-      <Link href="/contact" className="w-full">
-        <Button 
-          className={`w-full h-12 rounded-xl font-medium ${
-            isPopular 
-              ? "bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]" 
-              : "bg-white/10 hover:bg-white/20 text-white"
-          } transition-all`}
-        >
-          {ctaText}
-        </Button>
-      </Link>
+      <Button 
+        onClick={handleSubscribe}
+        disabled={loading}
+        className={`w-full h-12 rounded-xl font-medium ${
+          isPopular 
+            ? "bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]" 
+            : "bg-white/10 hover:bg-white/20 text-white"
+        } transition-all`}
+      >
+        {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : (price === "Custom" ? "Contact Us" : "Subscribe Now")}
+      </Button>
     </motion.div>
   )
 }

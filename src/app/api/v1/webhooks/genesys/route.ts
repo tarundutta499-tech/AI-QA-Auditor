@@ -55,13 +55,22 @@ export async function POST(req: Request) {
     // Verify API Key against the database
     const { data: apiKeyData, error: apiError } = await supabase
       .from('api_keys')
-      .select('company_id')
+      .select('company_id, companies(subscription_status)')
       .eq('key_value', token)
       .single()
 
     if (apiError || !apiKeyData) {
       console.error("API Key Verification Failed:", apiError)
       return NextResponse.json({ success: false, error: "Invalid API Key." }, { status: 401 })
+    }
+
+    // Enforce Active Subscription
+    const companyData = apiKeyData.companies as any
+    if (companyData?.subscription_status !== 'active') {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Payment Required: An active subscription is required to use the Automated QA API." 
+      }, { status: 402 })
     }
 
     const company_id = apiKeyData.company_id
