@@ -129,3 +129,20 @@ ALTER TABLE public.audit_results ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.coaching ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.dsat_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.calibrations ENABLE ROW LEVEL SECURITY;
+
+-- 12. api_keys
+CREATE TABLE public.api_keys (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES public.companies(id) ON DELETE CASCADE,
+    key_value TEXT UNIQUE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::TEXT, NOW()) NOT NULL
+);
+ALTER TABLE public.api_keys ENABLE ROW LEVEL SECURITY;
+
+-- Modify audits for raw JSON payload
+ALTER TABLE public.audits 
+ADD COLUMN raw_analysis JSONB,
+ADD COLUMN fatal_errors JSONB,
+ADD COLUMN coaching_notes JSONB,
+ADD COLUMN empathy_score DECIMAL;

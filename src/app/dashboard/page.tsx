@@ -4,17 +4,26 @@ import { useEffect, useState } from "react"
 import { createBrowserClient } from '@supabase/ssr'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Copy, CheckCircle2, FileAudio, Users, BarChart3, Activity } from "lucide-react"
+import { Copy, CheckCircle2, FileAudio, Users, BarChart3, Activity, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 
 export default function DashboardPage() {
   const [copied, setCopied] = useState(false)
   const [userName, setUserName] = useState("")
+  const [showKey, setShowKey] = useState(false)
   
-  // Dummy API key for demo
-  const apiKey = "qac_live_8f92j3n84m92834nj89f23"
-  const webhookUrl = "https://api.qacopilot.ai/v1/webhooks/genesys"
+  const [metrics, setMetrics] = useState({
+    totalCalls: 0,
+    avgEmpathy: 0,
+    avgCompliance: 0,
+    activeAgents: 0
+  })
+  
+  const [apiData, setApiData] = useState({
+    key: "Loading...",
+    webhookUrl: "Loading..."
+  })
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,14 +31,74 @@ export default function DashboardPage() {
   )
 
   useEffect(() => {
-    async function fetchUser() {
+    async function fetchDashboardData() {
       const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data } = await supabase.from('users').select('name').eq('id', user.id).single()
-        if (data) setUserName(data.name || "Manager")
+      if (!user) return
+
+      const { data: userData } = await supabase
+        .from('users')
+        .select('name, company_id')
+        .eq('id', user.id)
+        .single()
+        
+      if (!userData) return
+      
+      setUserName(userData.name || "Manager")
+      const companyId = userData.company_id
+      if (!companyId) return
+
+      const { count: agentsCount } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('company_id', companyId)
+        .eq('role', 'agent')
+        
+      const { data: callsData, count: callsCount } = await supabase
+        .from('calls')
+        .select('id', { count: 'exact' })
+        .eq('company_id', companyId)
+
+      const callIds = callsData?.map((c: any) => c.id) || []
+
+      let avgCompliance = 0
+      let avgEmpathy = 0
+      
+      if (callIds.length > 0) {
+        const { data: auditsData } = await supabase
+          .from('audits')
+          .select('compliance_percent, empathy_score')
+          .in('call_id', callIds)
+          
+        if (auditsData && auditsData.length > 0) {
+          const totalComp = auditsData.reduce((acc: number, a: any) => acc + (Number(a.compliance_percent) || 0), 0)
+          const totalEmp = auditsData.reduce((acc: number, a: any) => acc + (Number(a.empathy_score) || 0), 0)
+          
+          avgCompliance = Math.round(totalComp / auditsData.length)
+          avgEmpathy = Math.round(totalEmp / auditsData.length)
+        }
       }
+
+      setMetrics({
+        totalCalls: callsCount || 0,
+        avgCompliance,
+        avgEmpathy,
+        activeAgents: agentsCount || 0
+      })
+
+      const { data: keyData } = await supabase
+        .from('api_keys')
+        .select('key_value')
+        .eq('company_id', companyId)
+        .single()
+        
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://api.qacopilot.ai'
+        
+      setApiData({
+        key: keyData?.key_value || "No API key generated yet",
+        webhookUrl: `${baseUrl}/api/v1/webhooks/genesys`
+      })
     }
-    fetchUser()
+    fetchDashboardData()
   }, [])
 
   const copyToClipboard = (text: string) => {
@@ -61,9 +130,9 @@ export default function DashboardPage() {
             <FileAudio className="h-4 w-4 text-blue-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-white">1,284</div>
-            <p className="text-xs text-green-400 mt-2 flex items-center gap-1">
-               +12% from last week
+            <div className="text-4xl font-bold text-white">{metrics.totalCalls}</div>
+            <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+               Total calls processed
             </p>
           </CardContent>
         </Card>
@@ -73,9 +142,9 @@ export default function DashboardPage() {
             <Activity className="h-4 w-4 text-green-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-white">88%</div>
-            <p className="text-xs text-green-400 mt-2 flex items-center gap-1">
-               +2% from last week
+            <div className="text-4xl font-bold text-white">{metrics.avgEmpathy}%</div>
+            <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+               Based on processed calls
             </p>
           </CardContent>
         </Card>
@@ -85,9 +154,9 @@ export default function DashboardPage() {
             <CheckCircle2 className="h-4 w-4 text-blue-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-white">96%</div>
-            <p className="text-xs text-green-400 mt-2 flex items-center gap-1">
-               Perfect score target
+            <div className="text-4xl font-bold text-white">{metrics.avgCompliance}%</div>
+            <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+               Based on processed calls
             </p>
           </CardContent>
         </Card>
@@ -97,7 +166,7 @@ export default function DashboardPage() {
             <Users className="h-4 w-4 text-purple-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold text-white">42</div>
+            <div className="text-4xl font-bold text-white">{metrics.activeAgents}</div>
             <p className="text-xs text-muted-foreground mt-2">
                Agents currently live
             </p>
@@ -123,9 +192,9 @@ export default function DashboardPage() {
                 <div className="text-sm font-medium text-gray-400 mb-2">Your Production Webhook URL</div>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 bg-[#020617] p-3 rounded-lg text-green-400 font-mono text-sm border border-gray-800">
-                    {webhookUrl}
+                    {apiData.webhookUrl}
                   </code>
-                  <Button variant="outline" className="border-gray-700 hover:bg-gray-800" onClick={() => copyToClipboard(webhookUrl)}>
+                  <Button variant="outline" className="border-gray-700 hover:bg-gray-800" onClick={() => copyToClipboard(apiData.webhookUrl)}>
                     {copied ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4 text-gray-400" />}
                   </Button>
                 </div>
@@ -135,10 +204,11 @@ export default function DashboardPage() {
                 <div className="text-sm font-medium text-gray-400 mb-2">Secret API Key</div>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 bg-[#020617] p-3 rounded-lg text-blue-400 font-mono text-sm border border-gray-800">
-                    ••••••••••••••••••••••••••••
+                    {showKey ? apiData.key : "••••••••••••••••••••••••••••"}
                   </code>
-                  <Button variant="outline" className="border-gray-700 hover:bg-gray-800">
-                    Reveal Key
+                  <Button variant="outline" className="border-gray-700 hover:bg-gray-800" onClick={() => setShowKey(!showKey)}>
+                    {showKey ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+                    {showKey ? "Hide" : "Reveal Key"}
                   </Button>
                 </div>
               </div>
