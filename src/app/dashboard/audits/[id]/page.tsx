@@ -1,8 +1,9 @@
 import { createClient } from '@/utils/supabase/server'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { CheckCircle2, XCircle } from 'lucide-react'
 import { CalibrationButton } from '@/components/CalibrationButton'
+import { PrintWrapper } from '@/components/PrintWrapper'
 
 export default async function AuditResultPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params
@@ -28,8 +29,10 @@ export default async function AuditResultPage(props: { params: Promise<{ id: str
   } catch (e) {}
 
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="p-8 max-w-6xl mx-auto">
+      <PrintWrapper>
+        <div className="space-y-8">
+          <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Audit Result: {audit.calls?.client_name}</h1>
           <p className="text-muted-foreground mt-2">
@@ -144,6 +147,8 @@ export default async function AuditResultPage(props: { params: Promise<{ id: str
           </Card>
         </div>
       </div>
+        </div>
+      </PrintWrapper>
     </div>
   )
 }

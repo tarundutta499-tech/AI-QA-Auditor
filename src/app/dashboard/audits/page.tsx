@@ -5,8 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Plus } from 'lucide-react'
+import { AuditsFilter } from '@/components/AuditsFilter'
+import { ExportCSV } from '@/components/ExportCSV'
 
-export default async function AuditsPage() {
+export default async function AuditsPage(props: { searchParams?: Promise<{ [key: string]: string | string[] | undefined }> }) {
+  const searchParams = await props.searchParams;
+  const agentFilter = searchParams?.agent as string | undefined
+  const minScoreFilter = searchParams?.minScore as string | undefined
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
@@ -14,25 +20,50 @@ export default async function AuditsPage() {
   const { data: dbUser } = await supabase.from('users').select('company_id').eq('id', user.id).single()
   
   let audits: any[] = []
+  let agents: any[] = []
+
   if (dbUser) {
-    const { data } = await supabase
+    // Fetch unique agents for the dropdown
+    const { data: agentsData } = await supabase
+      .from('users')
+      .select('id, name')
+      .eq('company_id', dbUser.company_id)
+      .eq('role', 'agent')
+    if (agentsData) agents = agentsData
+
+    // Fetch Audits with filters
+    let query = supabase
       .from('audits')
-      .select('*, calls(*, users(name)), scorecards(name)')
+      .select('*, calls!inner(*, users(id, name)), scorecards(name)')
       .order('created_at', { ascending: false })
+
+    if (agentFilter) {
+      query = query.eq('calls.agent_id', agentFilter)
+    }
+    if (minScoreFilter) {
+      query = query.gte('compliance_percent', parseInt(minScoreFilter))
+    }
+
+    const { data } = await query
     if (data) audits = data
   }
 
   return (
     <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">QA Audits</h1>
           <p className="text-muted-foreground mt-2">View and manage AI-generated call audits.</p>
         </div>
-        <Link href="/dashboard/audits/new">
-          <Button><Plus className="mr-2 h-4 w-4" /> New Audit</Button>
-        </Link>
+        <div className="flex gap-2">
+          <ExportCSV data={audits} />
+          <Link href="/dashboard/audits/new">
+            <Button><Plus className="mr-2 h-4 w-4" /> New Audit</Button>
+          </Link>
+        </div>
       </div>
+
+      <AuditsFilter agents={agents} />
 
       <Card>
         <CardHeader>
@@ -56,7 +87,7 @@ export default async function AuditsPage() {
               {audits.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
-                    No audits found. Upload a call to get started.
+                    No audits found. Try adjusting your filters or upload a call.
                   </TableCell>
                 </TableRow>
               ) : (
