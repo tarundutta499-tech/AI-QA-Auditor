@@ -5,7 +5,8 @@ import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ShieldCheck, Loader2, Key } from "lucide-react"
+import Link from "next/link"
+import { ShieldCheck, Loader2, Key, ArrowLeft, Home } from "lucide-react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -64,6 +65,15 @@ export default function LoginPage() {
       
       {/* Background Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="absolute top-8 left-8 z-20">
+        <Link href="/">
+          <Button variant="ghost" className="text-gray-400 hover:text-white hover:bg-white/10 flex items-center gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </Button>
+        </Link>
+      </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="flex justify-center text-blue-500 mb-6">
