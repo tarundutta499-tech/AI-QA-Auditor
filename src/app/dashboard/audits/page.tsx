@@ -17,19 +17,21 @@ export default async function AuditsPage(props: { searchParams?: Promise<{ [key:
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: dbUser } = await supabase.from('users').select('company_id').eq('id', user.id).single()
+  const { data: dbUser } = await supabase.from('users').select('id, company_id, role').eq('id', user.id).single()
   
   let audits: any[] = []
   let agents: any[] = []
 
   if (dbUser) {
-    // Fetch unique agents for the dropdown
-    const { data: agentsData } = await supabase
-      .from('users')
-      .select('id, name')
-      .eq('company_id', dbUser.company_id)
-      .eq('role', 'agent')
-    if (agentsData) agents = agentsData
+    // Fetch unique agents for the dropdown (only if manager/admin)
+    if (dbUser.role !== 'agent') {
+      const { data: agentsData } = await supabase
+        .from('users')
+        .select('id, name')
+        .eq('company_id', dbUser.company_id)
+        .eq('role', 'agent')
+      if (agentsData) agents = agentsData
+    }
 
     // Fetch Audits with filters
     let query = supabase
@@ -37,8 +39,13 @@ export default async function AuditsPage(props: { searchParams?: Promise<{ [key:
       .select('*, calls!inner(*, users(id, name)), scorecards(name)')
       .order('created_at', { ascending: false })
 
-    if (agentFilter) {
-      query = query.eq('calls.agent_id', agentFilter)
+    // RBAC: Agents can only see their own calls
+    if (dbUser.role === 'agent') {
+      query = query.eq('calls.agent_id', dbUser.id)
+    } else {
+      if (agentFilter) {
+        query = query.eq('calls.agent_id', agentFilter)
+      }
     }
     if (minScoreFilter) {
       query = query.gte('compliance_percent', parseInt(minScoreFilter))

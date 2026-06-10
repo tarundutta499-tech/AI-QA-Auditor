@@ -25,11 +25,11 @@ export default function RootLayout({
       className={`${inter.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans bg-[#0A0A14] selection:bg-purple-500/20 selection:text-purple-400 text-white">
+      <body className="min-h-full flex flex-col font-sans bg-background text-foreground selection:bg-purple-500/20 selection:text-purple-400">
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
-          forcedTheme="dark"
+          defaultTheme="system"
+          enableSystem
           disableTransitionOnChange
         >
           {children}

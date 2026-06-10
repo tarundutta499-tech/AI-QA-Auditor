@@ -28,19 +28,21 @@ export function AuditsFilter({ agents }: { agents: any[] }) {
 
   return (
     <div className="flex flex-wrap items-center gap-4 mb-6 p-4 bg-muted/20 rounded-lg border">
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-medium text-muted-foreground">Agent:</span>
-        <select 
-          className="flex h-10 w-[200px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          value={agentId}
-          onChange={(e) => setAgentId(e.target.value)}
-        >
-          <option value="">All Agents</option>
-          {agents.map(a => (
-            <option key={a.id} value={a.id}>{a.name}</option>
-          ))}
-        </select>
-      </div>
+      {agents && agents.length > 0 && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-muted-foreground">Agent:</span>
+          <select 
+            className="flex h-10 w-[200px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            value={agentId}
+            onChange={(e) => setAgentId(e.target.value)}
+          >
+            <option value="">All Agents</option>
+            {agents.map(a => (
+              <option key={a.id} value={a.id}>{a.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="flex items-center gap-2">
         <span className="text-sm font-medium text-muted-foreground">Min Score:</span>

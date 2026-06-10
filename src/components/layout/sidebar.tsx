@@ -7,10 +7,10 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import { signout } from '@/app/login/actions'
 import { cn } from '@/lib/utils'
 
-export function Sidebar() {
+export function Sidebar({ role = 'agent' }: { role?: string }) {
   const pathname = usePathname()
   
-  const routes = [
+  let routes = [
     { label: 'Dashboard', href: '/dashboard', icon: Home },
     { label: 'Upload Audit', href: '/dashboard/audits/new', icon: Upload },
     { label: 'Analytics & Reports', href: '/dashboard/reports', icon: BarChart3 },
@@ -22,6 +22,15 @@ export function Sidebar() {
     { label: 'Billing', href: '/dashboard/billing', icon: CreditCard },
     { label: 'Settings', href: '/dashboard/settings', icon: Settings },
   ]
+
+  if (role === 'agent') {
+    routes = [
+      { label: 'My Dashboard', href: '/dashboard', icon: Home },
+      { label: 'My Audits', href: '/dashboard/audits', icon: ListChecks },
+      { label: 'My Scores', href: '/dashboard/reports', icon: BarChart3 },
+      { label: 'Knowledge Base', href: '/dashboard/knowledge', icon: BookOpen },
+    ]
+  }
 
   return (
     <div className="hidden border-r bg-background/40 backdrop-blur-xl md:block min-w-[280px] shadow-2xl shadow-primary/5 border-border/50">
