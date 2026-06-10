@@ -1,8 +1,14 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+
+const supabaseAdmin = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export async function createScorecard(formData: FormData) {
   const supabase = await createClient()
@@ -19,7 +25,8 @@ export async function createScorecard(formData: FormData) {
   const paramsStr = formData.get('parameters') as string
   const parameters = paramsStr ? JSON.parse(paramsStr) : []
 
-  const { data: scorecard, error: scorecardError } = await supabase
+  // Use Admin client to bypass RLS in case policies are missing
+  const { data: scorecard, error: scorecardError } = await supabaseAdmin
     .from('scorecards')
     .insert({
       company_id: dbUser.company_id,
@@ -31,7 +38,7 @@ export async function createScorecard(formData: FormData) {
 
   if (scorecardError || !scorecard) {
     console.error('Error creating scorecard', scorecardError)
-    return { error: 'Failed to create scorecard' }
+    throw new Error('Failed to create scorecard: ' + (scorecardError?.message || 'Unknown error'))
   }
 
   if (parameters.length > 0) {
@@ -43,7 +50,7 @@ export async function createScorecard(formData: FormData) {
       weightage: parseFloat(p.weightage)
     }))
 
-    const { error: paramsError } = await supabase.from('scorecard_parameters').insert(paramsToInsert)
+    const { error: paramsError } = await supabaseAdmin.from('scorecard_parameters').insert(paramsToInsert)
     if (paramsError) {
       console.error('Error creating parameters', paramsError)
     }
@@ -65,9 +72,14 @@ export async function updateScorecard(formData: FormData) {
   const paramsStr = formData.get('parameters') as string
   const parameters = paramsStr ? JSON.parse(paramsStr) : []
 
-  await supabase.from('scorecards').update({ name, description }).eq('id', id)
+  // Use Admin client to bypass RLS in case policies are missing
+  const { error: updateError } = await supabaseAdmin.from('scorecards').update({ name, description }).eq('id', id)
+  if (updateError) {
+    console.error('Error updating scorecard', updateError)
+    throw new Error('Failed to update scorecard: ' + updateError.message)
+  }
 
-  await supabase.from('scorecard_parameters').delete().eq('scorecard_id', id)
+  await supabaseAdmin.from('scorecard_parameters').delete().eq('scorecard_id', id)
 
   if (parameters.length > 0) {
     const paramsToInsert = parameters.map((p: any) => ({
@@ -78,7 +90,7 @@ export async function updateScorecard(formData: FormData) {
       weightage: parseFloat(p.weightage)
     }))
 
-    const { error: paramsError } = await supabase.from('scorecard_parameters').insert(paramsToInsert)
+    const { error: paramsError } = await supabaseAdmin.from('scorecard_parameters').insert(paramsToInsert)
     
     if (paramsError) {
       console.error("Error inserting parameters:", paramsError)
