@@ -40,9 +40,9 @@ export default function Navbar() {
           <Link href="/login" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
             Login
           </Link>
-          <Link href="/contact">
+          <Link href="/signup">
             <Button className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-5 h-9 shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all hover:scale-105">
-              Request a Demo
+              Sign Up Free
             </Button>
           </Link>
         </div>
@@ -69,9 +69,9 @@ export default function Navbar() {
           <Link href="/demo" onClick={() => setIsOpen(false)} className="text-blue-400 hover:text-blue-300 font-semibold">Try AI Demo</Link>
           <hr className="border-gray-800 my-4" />
           <Link href="/login" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">Login</Link>
-          <Link href="/contact" onClick={() => setIsOpen(false)}>
+          <Link href="/signup" onClick={() => setIsOpen(false)}>
             <Button className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-md mt-2">
-              Request a Demo
+              Sign Up Free
             </Button>
           </Link>
         </motion.div>
