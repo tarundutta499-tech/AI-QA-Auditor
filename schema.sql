@@ -163,3 +163,14 @@ ADD COLUMN raw_analysis JSONB,
 ADD COLUMN fatal_errors JSONB,
 ADD COLUMN coaching_notes JSONB,
 ADD COLUMN empathy_score DECIMAL;
+
+-- 13. invites
+CREATE TABLE public.invites (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES public.companies(id) ON DELETE CASCADE,
+    email TEXT NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('admin', 'qa', 'tl', 'agent')),
+    token UUID DEFAULT gen_random_uuid() UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::TEXT, NOW()) NOT NULL
+);
+ALTER TABLE public.invites ENABLE ROW LEVEL SECURITY;
