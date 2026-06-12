@@ -35,22 +35,21 @@ export default function Navbar() {
           <Link href="/demo" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">Try AI Demo</Link>
         </div>
 
-        {/* Desktop CTAs */}
-        <div className="hidden md:flex items-center gap-4">
-          <Link href="/login" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
+        {/* Desktop & Mobile CTAs */}
+        <div className="flex items-center gap-2 md:gap-4">
+          <Link href="/login" className="hidden md:block text-sm font-medium text-gray-300 hover:text-white transition-colors">
             Login
           </Link>
           <Link href="/signup">
-            <Button className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-5 h-9 shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all hover:scale-105">
+            <Button className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-4 md:px-5 h-8 md:h-9 text-xs md:text-sm shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all hover:scale-105">
               Sign Up Free
             </Button>
           </Link>
+          {/* Mobile Menu Toggle */}
+          <button className="md:hidden text-gray-300 hover:text-white ml-2" onClick={() => setIsOpen(!isOpen)}>
+            {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
-
-        {/* Mobile Menu Toggle */}
-        <button className="md:hidden text-gray-300 hover:text-white" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
       </div>
 
       {/* Mobile Drawer */}
