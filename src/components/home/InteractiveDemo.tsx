@@ -15,11 +15,7 @@ export default function InteractiveDemo() {
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Initialize Supabase client for storage upload
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  // We will initialize Supabase client inside the handler to prevent server-side build crashes
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -37,6 +33,11 @@ export default function InteractiveDemo() {
       setError(null)
       
       // 1. Upload to Supabase Storage
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+      
       const fileName = `demo_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
       
       const { data: uploadData, error: uploadError } = await supabase
