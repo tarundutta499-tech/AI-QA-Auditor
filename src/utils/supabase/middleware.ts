@@ -43,6 +43,7 @@ export async function updateSession(request: NextRequest) {
     !request.nextUrl.pathname.startsWith('/platform') &&
     !request.nextUrl.pathname.startsWith('/demo') &&
     !request.nextUrl.pathname.startsWith('/admin') &&
+    !request.nextUrl.pathname.startsWith('/signup') &&
     !request.nextUrl.pathname.startsWith('/join')
   ) {
     const url = request.nextUrl.clone()

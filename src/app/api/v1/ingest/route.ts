@@ -20,12 +20,24 @@ export async function POST(req: NextRequest) {
     
     const { data: company, error: companyError } = await supabase
       .from('companies')
-      .select('id, name')
+      .select('id, name, subscription_tier')
       .eq('api_key', apiKey)
       .single()
       
     if (companyError || !company) {
       return NextResponse.json({ error: 'Invalid API Key.' }, { status: 401 })
+    }
+
+    // Freemium Limit Check
+    if (!company.subscription_tier || company.subscription_tier === 'free') {
+      const { count, error: countError } = await supabase
+        .from('calls')
+        .select('*', { count: 'exact', head: true })
+        .eq('company_id', company.id)
+
+      if (!countError && count !== null && count >= 5) {
+        return NextResponse.json({ error: 'Free tier limit reached (5/5 audits). Please upgrade your plan.' }, { status: 403 })
+      }
     }
 
     // 2. Parse Request Body

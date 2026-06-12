@@ -30,6 +30,24 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createClient()
 
+    // Freemium Limit Check
+    const { data: company } = await supabase
+      .from('companies')
+      .select('subscription_tier')
+      .eq('id', companyId)
+      .single()
+
+    if (!company?.subscription_tier || company.subscription_tier === 'free') {
+      const { count, error: countError } = await supabase
+        .from('calls')
+        .select('*', { count: 'exact', head: true })
+        .eq('company_id', companyId)
+
+      if (!countError && count !== null && count >= 5) {
+        return NextResponse.json({ error: 'Free tier limit reached (5/5 audits). Please upgrade your plan in Billing.' }, { status: 403 })
+      }
+    }
+
     let audioUrl = ''
     let geminiFile: any = null
     let tempFilePath = ''

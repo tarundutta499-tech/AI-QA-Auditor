@@ -105,9 +105,9 @@ export default function HeroSection() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4"
           >
-            <Link href="/contact" className="w-full sm:w-auto">
+            <Link href="/signup" className="w-full sm:w-auto">
               <Button className="w-full h-14 px-8 bg-blue-600 hover:bg-blue-500 text-white rounded-full text-lg shadow-[0_0_20px_rgba(59,130,246,0.4)] transition-all hover:scale-105 group">
-                Book a Demo
+                Get Started Free
                 <ChevronRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
