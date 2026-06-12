@@ -16,50 +16,55 @@ export async function acceptInvite(formData: FormData) {
   const password = formData.get('password') as string
 
   if (!token || !fullName || !password) {
-    throw new Error('All fields are required')
+    return { error: 'All fields are required' }
   }
 
-  // 1. Verify Token
-  const { data: invite, error: inviteError } = await getAdminClient()
-    .from('invites')
-    .select('*')
-    .eq('token', token)
-    .single()
+  try {
+    // 1. Verify Token
+    const { data: invite, error: inviteError } = await getAdminClient()
+      .from('invites')
+      .select('*')
+      .eq('token', token)
+      .single()
 
-  if (inviteError || !invite) {
-    throw new Error('Invalid or expired invite link.')
-  }
+    if (inviteError || !invite) {
+      return { error: 'Invalid or expired invite link.' }
+    }
 
-  const supabase = await createClient()
+    const supabase = await createClient()
 
-  // 2. Create Auth User
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email: invite.email,
-    password,
-  })
-
-  if (authError || !authData.user) {
-    throw new Error(authError?.message || 'Failed to sign up')
-  }
-
-  // 3. Create User Profile mapped to the company
-  const { error: userError } = await getAdminClient()
-    .from('users')
-    .insert({
-      id: authData.user.id,
-      company_id: invite.company_id,
-      role: invite.role,
-      name: fullName,
-      email: invite.email
+    // 2. Create Auth User
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: invite.email,
+      password,
     })
 
-  if (userError) {
-    throw new Error('Failed to create user profile: ' + userError.message)
+    if (authError || !authData.user) {
+      return { error: authError?.message || 'Failed to sign up' }
+    }
+
+    // 3. Create User Profile mapped to the company
+    const { error: userError } = await getAdminClient()
+      .from('users')
+      .insert({
+        id: authData.user.id,
+        company_id: invite.company_id,
+        role: invite.role,
+        name: fullName,
+        email: invite.email
+      })
+
+    if (userError) {
+      return { error: 'Failed to create user profile: ' + userError.message }
+    }
+
+    // 4. Delete the invite so it can't be reused
+    await getAdminClient().from('invites').delete().eq('id', invite.id)
+
+    revalidatePath('/dashboard')
+    return { success: true }
+  } catch (err: any) {
+    console.error("Join exception:", err)
+    return { error: err.message || "An unexpected error occurred during join." }
   }
-
-  // 4. Delete the invite so it can't be reused
-  await getAdminClient().from('invites').delete().eq('id', invite.id)
-
-  revalidatePath('/dashboard')
-  redirect('/dashboard')
 }

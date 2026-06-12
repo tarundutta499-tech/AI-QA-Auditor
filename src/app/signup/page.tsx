@@ -20,8 +20,14 @@ export default function SignupPage() {
     const formData = new FormData(e.currentTarget)
 
     try {
-      await registerCompany(formData)
-      // registerCompany will redirect to /dashboard on success
+      const result = await registerCompany(formData)
+      if (result?.error) {
+        setError(result.error)
+        setLoading(false)
+      } else if (result?.success) {
+        // Success! Redirect to dashboard manually since redirect() is no longer in action
+        window.location.href = '/dashboard'
+      }
     } catch (err: any) {
       setError(err.message || "Failed to create account.")
       setLoading(false)

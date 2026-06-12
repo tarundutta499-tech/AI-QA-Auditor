@@ -79,7 +79,14 @@ export default async function JoinPage({
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="bg-[#0B1120] py-8 px-4 shadow-2xl border border-gray-800/60 sm:rounded-2xl sm:px-10">
           
-          <form action={acceptInvite} className="space-y-6">
+          <form action={async (formData) => {
+            const result = await acceptInvite(formData)
+            if (result?.error) {
+              alert(result.error) // Simple fallback since we don't have an error state in this component yet
+            } else if (result?.success) {
+              window.location.href = '/dashboard'
+            }
+          }} className="space-y-6">
             <input type="hidden" name="token" value={token} />
 
             <div>
