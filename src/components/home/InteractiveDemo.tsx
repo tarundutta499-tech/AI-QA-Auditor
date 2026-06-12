@@ -85,7 +85,10 @@ export default function InteractiveDemo() {
     <div id="demo" className="w-full max-w-5xl mx-auto px-6 py-12 scroll-mt-24">
       <div className="text-center mb-12">
         <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Test the AI Engine Now</h2>
-        <p className="text-xl text-gray-400 max-w-2xl mx-auto">Upload a 1-minute mock customer service call (MP3/WAV) and watch Gemini 1.5 Flash instantly grade the interaction.</p>
+        <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-4">Upload a 1-minute mock customer service call (MP3/WAV) and watch Gemini 1.5 Flash instantly grade the interaction.</p>
+        <p className="text-sm text-gray-500">
+          Not sure what to upload? <a href="#" className="text-blue-400 hover:text-blue-300 underline underline-offset-2">Download sample call</a> (MP3) to test the engine.
+        </p>
       </div>
 
       {/* Upload Zone */}

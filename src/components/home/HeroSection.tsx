@@ -11,7 +11,7 @@ export default function HeroSection() {
   const [complianceScore, setComplianceScore] = useState(0)
   
   const scorecardRef = useRef(null)
-  const isInView = useInView(scorecardRef, { once: true, margin: "-100px" })
+  const isInView = useInView(scorecardRef, { once: true, margin: "0px" })
 
   // Number counting effect
   useEffect(() => {
@@ -24,13 +24,13 @@ export default function HeroSection() {
       
       const timer = setInterval(() => {
         currentStep++
-        setEmpathyScore(Math.floor((currentStep / steps) * 87))
-        setComplianceScore(Math.floor((currentStep / steps) * 92))
+        setEmpathyScore(Math.floor((currentStep / steps) * 84))
+        setComplianceScore(Math.floor((currentStep / steps) * 91))
         
         if (currentStep >= steps) {
           clearInterval(timer)
-          setEmpathyScore(87)
-          setComplianceScore(92)
+          setEmpathyScore(84)
+          setComplianceScore(91)
         }
       }, stepTime)
       

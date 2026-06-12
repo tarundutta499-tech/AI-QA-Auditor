@@ -4,7 +4,7 @@ import { ShieldCheck, Globe, Mail } from "lucide-react"
 export default function Footer() {
   return (
     <footer className="bg-[#020617] border-t border-gray-800/50 pt-20 pb-10">
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-5 gap-12">
+      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
         
         {/* Brand Column */}
         <div className="md:col-span-2 space-y-4">
@@ -17,14 +17,6 @@ export default function Footer() {
           <p className="text-gray-400 text-sm max-w-xs">
             AI-powered QA for modern BPOs. Automatically audit 100% of your customer interactions with unprecedented accuracy.
           </p>
-          <div className="flex gap-4 pt-4">
-            <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-              <Globe className="h-5 w-5" />
-            </Link>
-            <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-              <Mail className="h-5 w-5" />
-            </Link>
-          </div>
         </div>
 
         {/* Product Column */}
@@ -41,19 +33,7 @@ export default function Footer() {
         <div>
           <h4 className="text-white font-semibold mb-4">Company</h4>
           <ul className="space-y-2 text-sm text-gray-400">
-            <li><Link href="#" className="hover:text-blue-400 transition-colors">About</Link></li>
             <li><Link href="/contact" className="hover:text-blue-400 transition-colors">Contact</Link></li>
-            <li><Link href="#" className="hover:text-blue-400 transition-colors">Careers</Link></li>
-          </ul>
-        </div>
-
-        {/* Resources Column */}
-        <div>
-          <h4 className="text-white font-semibold mb-4">Resources</h4>
-          <ul className="space-y-2 text-sm text-gray-400">
-            <li><Link href="#" className="hover:text-blue-400 transition-colors">Blog</Link></li>
-            <li><Link href="#" className="hover:text-blue-400 transition-colors">Case Studies</Link></li>
-            <li><Link href="#" className="hover:text-blue-400 transition-colors">Documentation</Link></li>
           </ul>
         </div>
 
@@ -62,15 +42,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-gray-800/50 flex flex-col md:flex-row items-center justify-between gap-4">
         <p className="text-gray-500 text-sm flex gap-4">
           <span>© 2026 QA Copilot. All rights reserved.</span>
-          <Link href="#" className="hover:text-gray-300">Privacy Policy</Link>
-          <Link href="#" className="hover:text-gray-300">Terms of Service</Link>
         </p>
-        <div className="flex items-center gap-2">
-          <span className="text-gray-500 text-sm">Powered by</span>
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-violet-500 font-bold text-sm flex items-center gap-1">
-            Google Gemini
-          </span>
-        </div>
       </div>
     </footer>
   )
