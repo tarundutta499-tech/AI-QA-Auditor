@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { ShieldCheck, ArrowLeft, User, Key } from "lucide-react"
 import { acceptInvite } from './actions'
 
-const supabaseAdmin = createSupabaseClient(
+const getAdminClient = () => createSupabaseClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -31,7 +31,7 @@ export default async function JoinPage({
   }
 
   // Fetch the invite securely on the server
-  const { data: invite, error } = await supabaseAdmin
+  const { data: invite, error } = await getAdminClient()
     .from('invites')
     .select('email, role, companies(name)')
     .eq('token', token)

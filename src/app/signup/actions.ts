@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
-const supabaseAdmin = createSupabaseClient(
+const getAdminClient = () => createSupabaseClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -35,7 +35,7 @@ export async function registerCompany(formData: FormData) {
   const userId = authData.user.id
 
   // 2. Create the Company via Admin to bypass RLS
-  const { data: company, error: companyError } = await supabaseAdmin
+  const { data: company, error: companyError } = await getAdminClient()
     .from('companies')
     .insert({
       name: companyName,
@@ -47,12 +47,12 @@ export async function registerCompany(formData: FormData) {
 
   if (companyError || !company) {
     // Attempt to rollback user if company fails (best effort)
-    await supabaseAdmin.auth.admin.deleteUser(userId)
+    await getAdminClient().auth.admin.deleteUser(userId)
     throw new Error('Failed to create company workspace: ' + companyError?.message)
   }
 
   // 3. Create the User Profile
-  const { error: userError } = await supabaseAdmin
+  const { error: userError } = await getAdminClient()
     .from('users')
     .insert({
       id: userId,
@@ -67,7 +67,7 @@ export async function registerCompany(formData: FormData) {
   }
 
   // 4. Create an API Key for the new company
-  await supabaseAdmin
+  await getAdminClient()
     .from('api_keys')
     .insert({
       company_id: company.id,

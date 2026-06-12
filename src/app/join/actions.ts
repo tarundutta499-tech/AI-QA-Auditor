@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
-const supabaseAdmin = createSupabaseClient(
+const getAdminClient = () => createSupabaseClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -20,7 +20,7 @@ export async function acceptInvite(formData: FormData) {
   }
 
   // 1. Verify Token
-  const { data: invite, error: inviteError } = await supabaseAdmin
+  const { data: invite, error: inviteError } = await getAdminClient()
     .from('invites')
     .select('*')
     .eq('token', token)
@@ -43,7 +43,7 @@ export async function acceptInvite(formData: FormData) {
   }
 
   // 3. Create User Profile mapped to the company
-  const { error: userError } = await supabaseAdmin
+  const { error: userError } = await getAdminClient()
     .from('users')
     .insert({
       id: authData.user.id,
@@ -58,7 +58,7 @@ export async function acceptInvite(formData: FormData) {
   }
 
   // 4. Delete the invite so it can't be reused
-  await supabaseAdmin.from('invites').delete().eq('id', invite.id)
+  await getAdminClient().from('invites').delete().eq('id', invite.id)
 
   revalidatePath('/dashboard')
   redirect('/dashboard')

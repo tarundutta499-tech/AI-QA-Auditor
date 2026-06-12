@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
-const supabaseAdmin = createSupabaseClient(
+const getAdminClient = () => createSupabaseClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -26,7 +26,7 @@ export async function createAgent(formData: FormData) {
   // Generate invite token and insert via admin to bypass RLS if policies are restrictive
   const token = crypto.randomUUID()
 
-  const { error } = await supabaseAdmin.from('invites').insert({
+  const { error } = await getAdminClient().from('invites').insert({
     company_id: dbUser.company_id,
     email,
     role,

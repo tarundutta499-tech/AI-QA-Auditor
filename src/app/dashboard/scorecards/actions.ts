@@ -5,7 +5,7 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-const supabaseAdmin = createSupabaseClient(
+const getAdminClient = () => createSupabaseClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
@@ -26,7 +26,7 @@ export async function createScorecard(formData: FormData) {
   const parameters = paramsStr ? JSON.parse(paramsStr) : []
 
   // Use Admin client to bypass RLS in case policies are missing
-  const { data: scorecard, error: scorecardError } = await supabaseAdmin
+  const { data: scorecard, error: scorecardError } = await getAdminClient()
     .from('scorecards')
     .insert({
       company_id: dbUser.company_id,
@@ -50,7 +50,7 @@ export async function createScorecard(formData: FormData) {
       weightage: parseFloat(p.weightage)
     }))
 
-    const { error: paramsError } = await supabaseAdmin.from('scorecard_parameters').insert(paramsToInsert)
+    const { error: paramsError } = await getAdminClient().from('scorecard_parameters').insert(paramsToInsert)
     if (paramsError) {
       console.error('Error creating parameters', paramsError)
     }
@@ -73,13 +73,13 @@ export async function updateScorecard(formData: FormData) {
   const parameters = paramsStr ? JSON.parse(paramsStr) : []
 
   // Use Admin client to bypass RLS in case policies are missing
-  const { error: updateError } = await supabaseAdmin.from('scorecards').update({ name, description }).eq('id', id)
+  const { error: updateError } = await getAdminClient().from('scorecards').update({ name, description }).eq('id', id)
   if (updateError) {
     console.error('Error updating scorecard', updateError)
     throw new Error('Failed to update scorecard: ' + updateError.message)
   }
 
-  await supabaseAdmin.from('scorecard_parameters').delete().eq('scorecard_id', id)
+  await getAdminClient().from('scorecard_parameters').delete().eq('scorecard_id', id)
 
   if (parameters.length > 0) {
     const paramsToInsert = parameters.map((p: any) => ({
@@ -90,7 +90,7 @@ export async function updateScorecard(formData: FormData) {
       weightage: parseFloat(p.weightage)
     }))
 
-    const { error: paramsError } = await supabaseAdmin.from('scorecard_parameters').insert(paramsToInsert)
+    const { error: paramsError } = await getAdminClient().from('scorecard_parameters').insert(paramsToInsert)
     
     if (paramsError) {
       console.error("Error inserting parameters:", paramsError)
