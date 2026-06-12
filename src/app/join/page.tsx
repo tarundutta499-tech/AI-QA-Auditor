@@ -69,7 +69,7 @@ export default async function JoinPage({
           <ShieldCheck className="w-16 h-16" />
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-white tracking-tight">
-          Join {invite.companies?.name || 'your Team'}
+          Join {(invite.companies as any)?.name || 'your Team'}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-400">
           You've been invited to join as an {invite.role === 'qa' ? 'QA Analyst' : invite.role === 'admin' ? 'Admin' : 'Agent'}.
