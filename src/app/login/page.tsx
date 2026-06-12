@@ -165,12 +165,7 @@ export default function LoginPage() {
               </Button>
             </div>
             
-            <div className="text-sm text-center mt-4">
-              <span className="text-gray-400">Don't have an account? </span>
-              <Link href="/signup" className="font-medium text-blue-500 hover:text-blue-400 transition-colors">
-                Sign up
-              </Link>
-            </div>
+            {/* Removed Sign Up link for private platform mode */}
           </form>
           
         </div>

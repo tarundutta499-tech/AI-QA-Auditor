@@ -9,6 +9,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
+    // Security Check: Ensure caller is the Super Admin
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+    
+    // We need to pass the access token from the request header to verify who is calling
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: authValidationError } = await supabase.auth.getUser(token)
+
+    if (authValidationError || !user || user.email !== process.env.SUPER_ADMIN_EMAIL) {
+      return NextResponse.json({ error: "Forbidden: Super Admin access required" }, { status: 403 })
+    }
+
     // Initialize Supabase admin client with SERVICE ROLE key
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

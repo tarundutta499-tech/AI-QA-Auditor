@@ -43,13 +43,22 @@ export async function updateSession(request: NextRequest) {
     !request.nextUrl.pathname.startsWith('/platform') &&
     !request.nextUrl.pathname.startsWith('/demo') &&
     !request.nextUrl.pathname.startsWith('/admin') &&
-    !request.nextUrl.pathname.startsWith('/signup') &&
     !request.nextUrl.pathname.startsWith('/join')
   ) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
+
+  // Super Admin Route Protection
+  if (user && request.nextUrl.pathname.startsWith('/admin')) {
+    if (user.email !== process.env.SUPER_ADMIN_EMAIL) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
+  }
+
 
   return supabaseResponse
 }

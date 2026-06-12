@@ -40,9 +40,9 @@ export default function Navbar() {
           <Link href="/login" className="hidden md:block text-sm font-medium text-gray-300 hover:text-white transition-colors">
             Login
           </Link>
-          <Link href="/signup">
+          <Link href="/contact">
             <Button className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-4 md:px-5 h-8 md:h-9 text-xs md:text-sm shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all hover:scale-105">
-              Sign Up Free
+              Book a Demo
             </Button>
           </Link>
           {/* Mobile Menu Toggle */}
@@ -68,9 +68,9 @@ export default function Navbar() {
           <Link href="/demo" onClick={() => setIsOpen(false)} className="text-blue-400 hover:text-blue-300 font-semibold">Try AI Demo</Link>
           <hr className="border-gray-800 my-4" />
           <Link href="/login" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">Login</Link>
-          <Link href="/signup" onClick={() => setIsOpen(false)}>
+          <Link href="/contact" onClick={() => setIsOpen(false)}>
             <Button className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-md mt-2">
-              Sign Up Free
+              Book a Demo
             </Button>
           </Link>
         </motion.div>
