@@ -3,7 +3,7 @@ import Footer from "@/components/layout/Footer"
 import InteractiveDemo from "@/components/home/InteractiveDemo"
 
 export const metadata = {
-  title: 'Try AI Demo - QA Copilot',
+  title: 'Try AI Demo - QA Insight AI',
   description: 'Test the Gemini 1.5 Flash AI grading engine on a sample customer service call.',
 }
 

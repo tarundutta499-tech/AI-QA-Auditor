@@ -33,7 +33,7 @@ export default function Scorecard({ data }: ScorecardProps) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-800 pb-6">
         <div>
           <h2 className="text-2xl font-bold text-white mb-2">AI Audit Scorecard</h2>
-          <p className="text-gray-400">Generated automatically by QA Copilot</p>
+          <p className="text-gray-400">Generated automatically by QA Insight AI</p>
         </div>
         <div className="flex gap-4">
           <div className="bg-[#020617] border border-gray-800 rounded-lg p-3 text-center min-w-[100px]">

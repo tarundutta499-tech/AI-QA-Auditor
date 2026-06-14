@@ -22,7 +22,7 @@ export default function Navbar() {
           <div className="bg-gradient-to-br from-blue-500 to-violet-600 p-1.5 rounded-lg group-hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all">
             <ShieldCheck className="h-5 w-5 text-white" />
           </div>
-          <span className="font-bold text-white tracking-tight">QA Copilot</span>
+          <span className="font-bold text-white tracking-tight">QA Insight AI</span>
         </Link>
 
         {/* Desktop Links */}

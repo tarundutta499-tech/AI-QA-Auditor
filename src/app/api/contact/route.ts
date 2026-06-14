@@ -39,14 +39,14 @@ export async function POST(request: Request) {
         </div>
         
         <p style="margin-top: 30px; font-size: 12px; color: #64748B; text-align: center;">
-          Sent automatically from your QA Copilot website via Resend.
+          Sent automatically from your QA Insight AI website via Resend.
         </p>
       </div>
     `
 
     // Send the email using Resend
     const { data: resendData, error } = await resend.emails.send({
-      from: 'QA Copilot <onboarding@resend.dev>', // Resend's default free-tier sender
+      from: 'QA Insight AI <onboarding@resend.dev>', // Resend's default free-tier sender
       to: recipientEmail,
       subject: `New Demo Request: ${company}`,
       html: emailHtml,

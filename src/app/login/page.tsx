@@ -80,7 +80,7 @@ export default function LoginPage() {
           <ShieldCheck className="w-16 h-16" />
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-white tracking-tight">
-          Sign in to QA Copilot
+          Sign in to QA Insight AI
         </h2>
         <p className="mt-2 text-center text-sm text-gray-400">
           Enterprise Audio Intelligence

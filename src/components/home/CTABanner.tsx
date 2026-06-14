@@ -18,7 +18,7 @@ export default function CTABanner() {
         <div className="relative z-10 py-20 px-8 text-center flex flex-col items-center">
           <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">Ready to Audit Every Interaction?</h2>
           <p className="text-xl text-blue-100 mb-10 max-w-2xl">
-            See how QA Copilot can transform your team's quality operations in a personalised 30-minute demo.
+            See how QA Insight AI can transform your team's quality operations in a personalised 30-minute demo.
           </p>
           <div className="flex flex-col items-center gap-4">
             <Link href="/contact">

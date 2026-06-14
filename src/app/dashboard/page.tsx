@@ -190,7 +190,7 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle className="text-xl">Telephony Integrations (Webhooks)</CardTitle>
                 <CardDescription>
-                  Connect QA Copilot directly to your phone system (Genesys, Twilio, Amazon Connect). 
+                  Connect QA Insight AI directly to your phone system (Genesys, Twilio, Amazon Connect). 
                   Once connected, calls will be automatically audited by AI the second the customer hangs up.
                 </CardDescription>
               </CardHeader>

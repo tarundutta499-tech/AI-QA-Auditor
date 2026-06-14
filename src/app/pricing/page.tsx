@@ -4,7 +4,7 @@ import PricingSection from "@/components/home/PricingSection"
 import CTABanner from "@/components/home/CTABanner"
 
 export const metadata = {
-  title: 'Pricing - QA Copilot',
+  title: 'Pricing - QA Insight AI',
   description: 'Simple, transparent pricing for QA automation.',
 }
 

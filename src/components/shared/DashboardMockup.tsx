@@ -30,7 +30,7 @@ export default function DashboardMockup() {
               <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center">
                 <span className="text-white text-xs">QA</span>
               </div>
-              Copilot
+              Insight AI
             </span>
           </div>
           <div className="p-4 space-y-2">

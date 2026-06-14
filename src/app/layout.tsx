@@ -10,7 +10,7 @@ const inter = Inter({
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: "QA Copilot - AI Quality Assurance",
+  title: "QA Insight AI - AI Quality Assurance",
   description: "AI-powered quality assurance for customer support",
 };
 

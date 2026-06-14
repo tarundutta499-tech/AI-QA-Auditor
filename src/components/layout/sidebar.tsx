@@ -40,7 +40,7 @@ export function Sidebar({ role = 'agent' }: { role?: string }) {
             <div className="bg-gradient-to-br from-primary to-blue-600 p-2 rounded-xl text-primary-foreground shadow-lg shadow-primary/30">
               <Activity className="h-5 w-5" />
             </div>
-            <span className="text-xl tracking-tight">QA Copilot</span>
+            <span className="text-xl tracking-tight">QA Insight AI</span>
           </Link>
         </div>
         <div className="flex-1 overflow-auto py-6">

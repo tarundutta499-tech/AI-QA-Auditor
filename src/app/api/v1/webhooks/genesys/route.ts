@@ -242,7 +242,7 @@ export async function POST(req: Request) {
               <ul>
                 ${scorecardData.coachingNotes.map((note: string) => `<li>${note}</li>`).join('')}
               </ul>
-              <p>Please log in to the QA Copilot Dashboard to review the full audit.</p>
+              <p>Please log in to the QA Insight AI Dashboard to review the full audit.</p>
             `
 
             await transporter.sendMail({

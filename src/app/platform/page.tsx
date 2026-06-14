@@ -4,7 +4,7 @@ import DashboardPreview from "@/components/home/DashboardPreview"
 import CTABanner from "@/components/home/CTABanner"
 
 export const metadata = {
-  title: 'Platform Preview - QA Copilot',
+  title: 'Platform Preview - QA Insight AI',
   description: 'Everything your QA team needs in one place.',
 }
 

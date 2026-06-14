@@ -8,7 +8,7 @@ export default function SolutionSection() {
     <section className="py-32 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-20">
-          <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Meet QA Copilot — Your AI Quality Manager</h2>
+          <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Meet QA Insight AI — Your AI Quality Manager</h2>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto">Everything you need to automate QA, identify compliance risks, and coach your agents effectively.</p>
         </div>
 
