@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { processAudit } from '@/lib/audit-service'
+import { GoogleGenAI } from '@google/genai'
+import { writeFile, unlink } from 'fs/promises'
+import os from 'os'
+import path from 'path'
+import { v4 as uuidv4 } from 'uuid'
 
 // In a real production setup, we can use Vercel Cron to hit this endpoint 
 // every 1 minute. We process up to 3 calls per minute to stay under timeout limits.
@@ -61,11 +66,45 @@ export async function GET() {
             chatTranscript: call.raw_chat
           })
           processedIds.push(call.id)
-        } else {
-          // Audio logic for cron requires downloading the remote file to tmpdir.
-          // Implementing that requires fetching the URL and piping to fs.
-          console.warn("Audio cron processing requires download step not fully implemented in MVP yet. Call ID:", call.id)
-          failedIds.push(call.id)
+        } else if (call.audio_url) {
+          let geminiFile: any = null
+          let tempFilePath = ''
+          const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+
+          try {
+            console.log(`Downloading audio for call ${call.id}...`)
+            const res = await fetch(call.audio_url)
+            if (!res.ok) throw new Error(`Failed to download audio: ${res.statusText}`)
+            const buffer = Buffer.from(await res.arrayBuffer())
+            
+            const tempFileName = `${uuidv4()}-audio.mp3`
+            tempFilePath = path.join(os.tmpdir(), tempFileName)
+            await writeFile(tempFilePath, buffer)
+
+            console.log(`Uploading audio to Gemini for call ${call.id}...`)
+            geminiFile = await ai.files.upload({
+              file: tempFilePath,
+              config: { mimeType: call.audio_url.toLowerCase().endsWith('.wav') ? 'audio/wav' : 'audio/mp3' },
+            })
+
+            console.log(`Processing audit for call ${call.id}...`)
+            await processAudit({
+              supabase,
+              callId: call.id,
+              scorecardId,
+              agentId: call.agent_id,
+              auditType: 'audio',
+              geminiFile
+            })
+            
+            processedIds.push(call.id)
+          } finally {
+            // Clean up resources regardless of success/failure
+            if (geminiFile) {
+              await unlink(tempFilePath).catch(console.error)
+              await ai.files.delete({ name: geminiFile.name }).catch(console.error)
+            }
+          }
         }
 
       } catch (err: any) {
