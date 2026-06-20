@@ -22,9 +22,11 @@ export default async function AuditResultPage(props: { params: Promise<{ id: str
 
   let utterances: any[] = []
   try {
-    const paragraphs = transcript?.content?.results?.channels?.[0]?.alternatives?.[0]?.paragraphs?.paragraphs
-    if (paragraphs && Array.isArray(paragraphs)) {
-      utterances = paragraphs
+    if (transcript?.content && Array.isArray(transcript.content)) {
+      utterances = transcript.content
+    } else if (transcript?.content?.results) {
+      // Fallback for old Deepgram transcripts
+      utterances = transcript.content.results.channels?.[0]?.alternatives?.[0]?.paragraphs?.paragraphs || []
     }
   } catch (e) {}
 
@@ -82,20 +84,26 @@ export default async function AuditResultPage(props: { params: Promise<{ id: str
               <CardTitle>Call Transcript</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 max-h-[500px] overflow-y-auto bg-[#020617] p-4 rounded-b-xl border-t border-gray-800">
-              {utterances.length > 0 ? utterances.map((para: any, idx: number) => (
-                <div key={idx} className={`flex flex-col gap-1 ${para.speaker === 0 ? 'items-end' : 'items-start'}`}>
+              {utterances.length > 0 ? utterances.map((para: any, idx: number) => {
+                const isAgent = para.speaker === 'Agent' || para.speaker === 0
+                const speakerName = isAgent ? 'Agent' : 'Customer'
+                const timestamp = para.timestamp || (para.start ? `${Math.round(para.start)}s` : '')
+                const text = para.text || (para.sentences?.map((s: any) => s.text).join(' ') || '')
+
+                return (
+                <div key={idx} className={`flex flex-col gap-1 ${isAgent ? 'items-end' : 'items-start'}`}>
                   <span className="text-xs text-muted-foreground px-1">
-                    {para.speaker === 0 ? 'Agent' : 'Customer'} • {Math.round(para.start)}s
+                    {speakerName} • {timestamp}
                   </span>
                   <div className={`p-3 text-sm rounded-2xl max-w-[80%] ${
-                    para.speaker === 0 
+                    isAgent 
                       ? 'bg-blue-600 text-white rounded-tr-sm' 
                       : 'bg-gray-800 text-gray-100 rounded-tl-sm border border-gray-700'
                   }`}>
-                    {para.sentences?.map((s: any) => s.text).join(' ')}
+                    {text}
                   </div>
                 </div>
-              )) : (
+              )}) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center h-full">
                   <p className="text-muted-foreground mb-2">Transcript is generating or unavailable.</p>
                   <p className="text-xs text-gray-500">Audio files under 10 seconds may not generate a full transcript.</p>

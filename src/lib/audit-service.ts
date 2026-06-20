@@ -58,6 +58,7 @@ You are an expert QA Auditor for customer support interactions.
 Analyze the provided ${auditType === 'audio' ? 'audio call recording' : 'text chat transcript'}.${knowledgeContext}
 
 1. Generate a standardized transcript with speaker labels (Agent, Customer) and timestamps.
+   IMPORTANT MASKING RULE: You MUST redact all Personally Identifiable Information (PII) including names, phone numbers, addresses, credit cards, company names, app names, or service names from the transcript text. Replace them with [REDACTED].
 2. Identify any "dead air" (silences > 30 seconds) or unusually long delays in response.
 3. Audit the call based on the following scorecard parameters:
 ${parameters.map((p: any) => `- ${p.name} (Max Score: ${p.max_score}, Weight: ${p.weightage})`).join('\n')}
