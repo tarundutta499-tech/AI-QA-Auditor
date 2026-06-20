@@ -57,7 +57,7 @@ export async function createScorecard(formData: FormData) {
   }
 
   revalidatePath('/dashboard/scorecards')
-  return { success: true }
+  redirect('/dashboard/scorecards')
 }
 
 export async function updateScorecard(formData: FormData) {
@@ -99,5 +99,5 @@ export async function updateScorecard(formData: FormData) {
   }
 
   revalidatePath('/dashboard/scorecards')
-  return { success: true }
+  redirect('/dashboard/scorecards')
 }
