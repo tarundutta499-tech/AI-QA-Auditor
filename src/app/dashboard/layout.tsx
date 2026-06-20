@@ -2,11 +2,16 @@ import { Sidebar } from '@/components/layout/sidebar'
 import { ReactNode } from 'react'
 import { AutoLogout } from '@/components/AutoLogout'
 import { createClient } from '@/utils/supabase/server'
+import { redirect } from 'next/navigation'
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
+  if (!user) {
+    redirect('/login')
+  }
+
   let role = 'agent' // Default fallback
   if (user) {
     const { data: dbUser } = await supabase.from('users').select('role').eq('id', user.id).single()
