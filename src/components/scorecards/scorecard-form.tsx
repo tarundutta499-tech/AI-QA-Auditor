@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createScorecard, updateScorecard } from '@/app/dashboard/scorecards/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,6 +12,7 @@ import { Switch } from '@/components/ui/switch'
 import { Plus, Trash2 } from 'lucide-react'
 
 export function ScorecardForm({ initialData }: { initialData?: any }) {
+  const router = useRouter()
   const [parameters, setParameters] = useState(
     initialData?.parameters?.length > 0
       ? initialData.parameters
@@ -35,8 +37,16 @@ export function ScorecardForm({ initialData }: { initialData?: any }) {
   const totalMaxScore = parameters.reduce((sum: number, p: any) => sum + (Number(p.max_score) || 0), 0)
   const totalWeightage = parameters.reduce((sum: number, p: any) => sum + (Number(p.weightage) || 0), 0)
 
+  const handleSubmit = async (formData: FormData) => {
+    const result = await (initialData ? updateScorecard(formData) : createScorecard(formData))
+    if (result?.success) {
+      router.push('/dashboard/scorecards')
+      router.refresh()
+    }
+  }
+
   return (
-    <form action={async (formData) => { await (initialData ? updateScorecard(formData) : createScorecard(formData)) }} className="space-y-8">
+    <form action={handleSubmit} className="space-y-8">
       {initialData && <input type="hidden" name="id" value={initialData.id} />}
       <Card>
         <CardHeader>
