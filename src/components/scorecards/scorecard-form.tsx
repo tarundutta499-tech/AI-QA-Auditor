@@ -35,10 +35,8 @@ export function ScorecardForm({ initialData }: { initialData?: any }) {
   const totalMaxScore = parameters.reduce((sum: number, p: any) => sum + (Number(p.max_score) || 0), 0)
   const totalWeightage = parameters.reduce((sum: number, p: any) => sum + (Number(p.weightage) || 0), 0)
 
-  const formAction = initialData ? updateScorecard : createScorecard
-
   return (
-    <form action={formAction} className="space-y-8">
+    <form action={async (formData) => { await (initialData ? updateScorecard(formData) : createScorecard(formData)) }} className="space-y-8">
       {initialData && <input type="hidden" name="id" value={initialData.id} />}
       <Card>
         <CardHeader>
