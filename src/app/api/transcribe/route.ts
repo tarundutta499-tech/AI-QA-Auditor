@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { GoogleGenAI } from '@google/genai'
 import { writeFile, unlink } from 'fs/promises'
 import os from 'os'
 import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
 import { processAudit } from '@/lib/audit-service'
+
+export const maxDuration = 60; // Allow Vercel functions to run up to 60 seconds
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,16 +32,21 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = await createClient()
+    const getAdminClient = () => createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+    const adminSupabase = getAdminClient()
 
     // Freemium Limit Check
-    const { data: company } = await supabase
+    const { data: company } = await adminSupabase
       .from('companies')
       .select('subscription_tier')
       .eq('id', companyId)
       .single()
 
     if (!company?.subscription_tier || company.subscription_tier === 'free') {
-      const { count, error: countError } = await supabase
+      const { count, error: countError } = await adminSupabase
         .from('calls')
         .select('*', { count: 'exact', head: true })
         .eq('company_id', companyId)
@@ -60,12 +68,12 @@ export async function POST(req: NextRequest) {
       await writeFile(tempFilePath, buffer)
 
       const storagePath = `${companyId}/${tempFileName}`
-      const { error: storageError } = await supabase.storage
+      const { error: storageError } = await adminSupabase.storage
         .from('audio_files')
         .upload(storagePath, audioFile)
         
       if (!storageError) {
-        const { data } = supabase.storage.from('audio_files').getPublicUrl(storagePath)
+        const { data } = adminSupabase.storage.from('audio_files').getPublicUrl(storagePath)
         audioUrl = data.publicUrl
       }
 
@@ -76,7 +84,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Create Call Record (Status: pending)
-    const { data: call } = await supabase.from('calls').insert({
+    const { data: call } = await adminSupabase.from('calls').insert({
       company_id: companyId,
       agent_id: agentId,
       client_name: clientName,
@@ -89,7 +97,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Process using the centralized AI Brain
     const result = await processAudit({
-      supabase,
+      supabase: adminSupabase,
       callId: call.id,
       scorecardId,
       agentId,
