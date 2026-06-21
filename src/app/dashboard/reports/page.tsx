@@ -18,7 +18,7 @@ export default async function ReportsPage() {
 
   let query = adminClient
     .from('audits')
-    .select('*, calls!inner(*, users(name))')
+    .select('*, calls!inner(*, users(name)), audit_results(is_passed, scorecard_parameters(name))')
     .order('created_at', { ascending: true })
 
   if (dbUser.role === 'agent') {
@@ -39,14 +39,27 @@ export default async function ReportsPage() {
   }))
 
   const agentMap: Record<string, { totalComp: number, totalEmp: number, count: number }> = {}
-  formattedData.forEach(audit => {
-    const aName = audit.agent_name
+  const failureCounts: Record<string, number> = {}
+  let totalFailures = 0
+
+  ;(audits || []).forEach(audit => {
+    // Aggregate Agent Data
+    const aName = audit.calls?.users?.name || "Unknown"
     if (!agentMap[aName]) {
       agentMap[aName] = { totalComp: 0, totalEmp: 0, count: 0 }
     }
-    agentMap[aName].totalComp += (audit.compliance_score || 0)
+    agentMap[aName].totalComp += (audit.compliance_percent || 0)
     agentMap[aName].totalEmp += (audit.empathy_score || 0)
     agentMap[aName].count += 1
+
+    // Aggregate Pareto Data (Root Cause Analysis)
+    audit.audit_results?.forEach((result: any) => {
+      if (result.is_passed === false && result.scorecard_parameters?.name) {
+        const paramName = result.scorecard_parameters.name
+        failureCounts[paramName] = (failureCounts[paramName] || 0) + 1
+        totalFailures++
+      }
+    })
   })
 
   const aggregatedAgentData = Object.entries(agentMap).map(([name, stats]) => ({
@@ -56,10 +69,23 @@ export default async function ReportsPage() {
     calls: stats.count
   }))
 
+  let cumulativeCount = 0
+  const paretoData = Object.entries(failureCounts)
+    .sort((a, b) => b[1] - a[1]) // Sort descending by frequency
+    .map(([name, count]) => {
+      cumulativeCount += count
+      return {
+        name,
+        count,
+        cumulativePercentage: totalFailures > 0 ? Math.round((cumulativeCount / totalFailures) * 100) : 0
+      }
+    })
+
   return (
     <ReportsCharts 
       data={formattedData} 
       agentData={aggregatedAgentData} 
+      paretoData={paretoData}
       role={dbUser.role} 
     />
   )

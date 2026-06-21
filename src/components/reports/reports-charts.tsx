@@ -1,12 +1,12 @@
 "use client"
 
 import { useState } from 'react'
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { TrendingUp, AlertTriangle, ShieldCheck, FileAudio } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-export function ReportsCharts({ data, agentData, role }: { data: any[], agentData: any[], role: string }) {
+export function ReportsCharts({ data, agentData, paretoData, role }: { data: any[], agentData: any[], paretoData: any[], role: string }) {
   const [timeframe, setTimeframe] = useState<'all' | 'daily' | 'weekly' | 'monthly'>('daily')
 
   const avgEmpathy = data.length > 0 
@@ -183,6 +183,66 @@ export function ReportsCharts({ data, agentData, role }: { data: any[], agentDat
                 </CardContent>
               </Card>
             )}
+
+            {isManager && paretoData && paretoData.length > 0 && (
+              <Card className="col-span-1 lg:col-span-2 border-border/50 shadow-xl">
+                <CardHeader>
+                  <CardTitle>Root Cause Analysis (Pareto)</CardTitle>
+                  <CardDescription>The 80/20 Rule: Which specific scorecard parameters cause the most audit failures?</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[450px] w-full mt-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={paretoData} margin={{ top: 20, right: 20, bottom: 80, left: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
+                        <XAxis 
+                          dataKey="name" 
+                          className="text-muted-foreground text-xs" 
+                          angle={-45}
+                          textAnchor="end"
+                          height={80}
+                        />
+                        <YAxis 
+                          yAxisId="left" 
+                          className="text-muted-foreground text-xs" 
+                          label={{ value: 'Failure Frequency', angle: -90, position: 'insideLeft', offset: -10 }} 
+                        />
+                        <YAxis 
+                          yAxisId="right" 
+                          orientation="right" 
+                          className="text-muted-foreground text-xs" 
+                          domain={[0, 100]}
+                          label={{ value: 'Cumulative %', angle: 90, position: 'insideRight', offset: -10 }} 
+                        />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)', borderRadius: '8px' }}
+                          cursor={{ fill: 'var(--muted)' }}
+                        />
+                        <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                        <Bar 
+                          yAxisId="left" 
+                          dataKey="count" 
+                          name="Times Failed" 
+                          fill="#ef4444" 
+                          radius={[4, 4, 0, 0]} 
+                          barSize={60}
+                        />
+                        <Line 
+                          yAxisId="right" 
+                          type="monotone" 
+                          dataKey="cumulativePercentage" 
+                          name="Cumulative %" 
+                          stroke="#f59e0b" 
+                          strokeWidth={3} 
+                          dot={{ r: 4, fill: "#f59e0b" }} 
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
           </div>
         </>
       )}
