@@ -19,13 +19,21 @@ export default async function AuditsPage(props: { searchParams?: Promise<{ [key:
 
   const { data: dbUser } = await supabase.from('users').select('id, company_id, role').eq('id', user.id).single()
   
+  const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
+  const getAdminClient = () => createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
   let audits: any[] = []
   let agents: any[] = []
 
   if (dbUser) {
+    const adminClient = getAdminClient()
+
     // Fetch unique agents for the dropdown (only if manager/admin)
     if (dbUser.role !== 'agent') {
-      const { data: agentsData } = await supabase
+      const { data: agentsData } = await adminClient
         .from('users')
         .select('id, name')
         .eq('company_id', dbUser.company_id)
@@ -34,7 +42,7 @@ export default async function AuditsPage(props: { searchParams?: Promise<{ [key:
     }
 
     // Fetch Audits with filters
-    let query = supabase
+    let query = adminClient
       .from('audits')
       .select('*, calls!inner(*, users(id, name)), scorecards(name)')
       .order('created_at', { ascending: false })

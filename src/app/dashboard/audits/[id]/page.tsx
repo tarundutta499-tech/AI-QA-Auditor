@@ -10,15 +10,21 @@ export default async function AuditResultPage(props: { params: Promise<{ id: str
   const id = params.id
   
   const supabase = await createClient()
+  const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
+  const getAdminClient = () => createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+  const adminClient = getAdminClient()
   
-  const { data: audit } = await supabase.from('audits').select('*, calls(*, users(name)), scorecards(name)').eq('id', id).single()
+  const { data: audit } = await adminClient.from('audits').select('*, calls(*, users(name)), scorecards(name)').eq('id', id).single()
   if (!audit) return <div className="p-8">Audit not found</div>
 
-  const { data: results } = await supabase.from('audit_results').select('*, scorecard_parameters(name, max_score)').eq('audit_id', id)
+  const { data: results } = await adminClient.from('audit_results').select('*, scorecard_parameters(name, max_score)').eq('audit_id', id)
   
-  const { data: coaching } = await supabase.from('coaching').select('*').eq('audit_id', id).single()
+  const { data: coaching } = await adminClient.from('coaching').select('*').eq('audit_id', id).single()
 
-  const { data: transcript } = await supabase.from('transcripts').select('*').eq('call_id', audit.call_id).single()
+  const { data: transcript } = await adminClient.from('transcripts').select('*').eq('call_id', audit.call_id).single()
 
   let utterances: any[] = []
   try {
