@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Plus } from 'lucide-react'
+import { Plus, Eye } from 'lucide-react'
 import { AuditsFilter } from '@/components/AuditsFilter'
 import { ExportCSV } from '@/components/ExportCSV'
+import { DeleteAuditButton } from '@/components/audits/delete-audit-button'
 
 export default async function AuditsPage(props: { searchParams?: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const searchParams = await props.searchParams;
@@ -121,9 +122,14 @@ export default async function AuditsPage(props: { searchParams?: Promise<{ [key:
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Link href={`/dashboard/audits/${audit.id}`}>
-                        <Button variant="ghost" size="sm">View</Button>
-                      </Link>
+                      <div className="flex items-center justify-end gap-2">
+                        <Link href={`/dashboard/audits/${audit.id}`}>
+                          <Button variant="ghost" size="sm" title="View Audit">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <DeleteAuditButton auditId={audit.id} />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
