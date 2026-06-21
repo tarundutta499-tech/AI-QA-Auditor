@@ -43,7 +43,7 @@ export default async function DashboardPage() {
     )
 
     // Fetch calls
-    let callsQuery = adminClient.from('calls').select('id', { count: 'exact' }).eq('company_id', companyId)
+    let callsQuery = adminClient.from('calls').select('id', { count: 'exact' }).eq('company_id', companyId).eq('status', 'audited')
     if (role === 'agent') {
       callsQuery = callsQuery.eq('agent_id', user.id)
     }
