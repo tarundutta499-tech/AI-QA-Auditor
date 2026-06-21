@@ -136,6 +136,7 @@ Return the result STRICTLY as a JSON object with this exact structure:
   // Calculate total score
   const maxScore = parameters.reduce((sum: number, p: any) => sum + p.max_score, 0)
   const obtainedScore = analysis.audit_results.reduce((sum: number, r: any) => sum + r.obtained_score, 0)
+  const calculatedCompliancePercent = maxScore > 0 ? Math.round((obtainedScore / maxScore) * 100) : 0
 
   // Update Call Status
   await supabase.from('calls').update({ status: 'audited' }).eq('id', callId)
@@ -152,7 +153,7 @@ Return the result STRICTLY as a JSON object with this exact structure:
     call_id: callId,
     scorecard_id: scorecardId,
     overall_score: obtainedScore,
-    compliance_percent: analysis.overall_compliance_percent,
+    compliance_percent: calculatedCompliancePercent,
     empathy_score: analysis.empathy_score || 0
   }).select().single()
 
