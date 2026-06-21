@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Copy, CheckCircle2, Eye, EyeOff } from "lucide-react"
@@ -8,16 +8,17 @@ import { Copy, CheckCircle2, Eye, EyeOff } from "lucide-react"
 export function DashboardClient({ apiData }: { apiData: { key: string, webhookUrl: string } }) {
   const [copied, setCopied] = useState(false)
   const [showKey, setShowKey] = useState(false)
-
   const [webhookUrl, setWebhookUrl] = useState(apiData.webhookUrl)
 
-  // Use window.location.origin dynamically if running in browser
-  if (typeof window !== 'undefined' && webhookUrl === "https://api.qacopilot.ai/api/v1/webhooks/genesys") {
-    const dynamicUrl = `${window.location.origin}/api/v1/webhooks/genesys`
-    if (dynamicUrl !== webhookUrl) {
-      setWebhookUrl(dynamicUrl)
+  useEffect(() => {
+    // Use window.location.origin dynamically if running in browser
+    if (typeof window !== 'undefined' && webhookUrl === "https://api.qacopilot.ai/api/v1/webhooks/genesys") {
+      const dynamicUrl = `${window.location.origin}/api/v1/webhooks/genesys`
+      if (dynamicUrl !== webhookUrl) {
+        setWebhookUrl(dynamicUrl)
+      }
     }
-  }
+  }, [])
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
