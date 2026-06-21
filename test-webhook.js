@@ -1,48 +1,66 @@
-/**
- * Run this script with Node.js to simulate a phone system (like Genesys)
- * sending a completed call to your Webhook API.
- * 
- * Command: node test-webhook.js
- */
+const https = require('http'); // using http since we are testing on localhost:3000
 
-async function testWebhook() {
-  const WEBHOOK_URL = "http://localhost:3000/api/v1/webhooks/genesys";
-  
-  // We will insert 'qac_test_key_123' into your Supabase database manually
-  const API_KEY = "qac_test_key_123"; 
-  
-  // A sample public audio file from Supabase storage (or any public URL)
-  // For the test, we'll use a sample URL. In a real test, replace this with a real call recording.
-  const audioUrl = "https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg";
+// ==========================================
+// CONFIGURATION
+// Replace this with the API Key and Email shown on your Dashboard!
+const API_KEY = "qac_test_key_123"; 
+const AGENT_EMAIL = "tarun.dutta499@gmail.com"; 
+// ==========================================
 
-  console.log(`🚀 Sending mock call data to ${WEBHOOK_URL}...`);
-  
-  try {
-    const response = await fetch(WEBHOOK_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`
-      },
-      body: JSON.stringify({
-        client_name: 'John Doe (Mock)',
-        agent_id: null,
-        duration: 45,
-        audio_url: audioUrl
-      })
-    });
-    
-    const data = await response.json();
-    
-    if (response.ok) {
-      console.log("✅ SUCCESS! The webhook accepted the call and Gemini analyzed it.");
-      console.log(data);
-    } else {
-      console.error("❌ FAILED:", data);
-    }
-  } catch (error) {
-    console.error("Network Error:", error);
+const payload = JSON.stringify({
+  agent_email: AGENT_EMAIL,
+  client_name: "John Doe (Webhook Test)",
+  duration: 180,
+  text_transcript: `
+Customer: Hi, I'm calling because my internet has been down for 3 hours.
+Agent: Oh, I'm sorry to hear that. Let me look into your account. Can I have your name and phone number?
+Customer: John Doe, 555-0198.
+Agent: Thanks John. I see the outage in your area. It should be resolved in the next hour.
+Customer: Okay, thank you.
+Agent: You're welcome. Have a great day!
+  `.trim()
+});
+
+const options = {
+  hostname: 'localhost',
+  port: 3000,
+  path: '/api/v1/webhooks/genesys',
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${API_KEY}`,
+    'Content-Length': Buffer.byteLength(payload)
   }
-}
+};
 
-testWebhook();
+console.log(`🚀 Firing Mock Webhook Payload to localhost:3000...`);
+
+const req = https.request(options, (res) => {
+  let data = '';
+  
+  res.on('data', (chunk) => {
+    data += chunk;
+  });
+  
+  res.on('end', () => {
+    console.log(`\n✅ Response Status: ${res.statusCode}`);
+    try {
+      console.log(`✅ Response Body:`, JSON.parse(data));
+      if (res.statusCode === 202) {
+        console.log(`\n🎉 SUCCESS! The call has been injected and the AI is auditing it in the background!`);
+        console.log(`Go check your web Dashboard in about 15 seconds to see the new audit appear.`);
+      }
+    } catch (e) {
+      console.log(`Response Body:`, data);
+    }
+  });
+});
+
+req.on('error', (error) => {
+  console.error('\n❌ Connection Error!');
+  console.error('Make sure your Next.js server is running (npm run dev) on port 3000!');
+  console.error(error.message);
+});
+
+req.write(payload);
+req.end();
