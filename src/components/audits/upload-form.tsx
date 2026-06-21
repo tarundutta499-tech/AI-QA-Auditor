@@ -40,10 +40,22 @@ export function UploadForm({ scorecards, agents, companyId }: { scorecards: any[
           const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
           const storagePath = `${companyId}/${fileName}`
           
+          setProgressText('Preparing secure upload tunnel...')
+          // Get Signed URL from our backend
+          const urlRes = await fetch('/api/upload-url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fileName, companyId })
+          })
+          
+          if (!urlRes.ok) throw new Error('Failed to prepare upload')
+          const { path, token } = await urlRes.json()
+
           setProgressText('Uploading audio file to secure storage...')
+          // Upload directly to Supabase using the signed token to bypass RLS!
           const { error: uploadError } = await supabase.storage
             .from('audio_files')
-            .upload(storagePath, audioFile)
+            .uploadToSignedUrl(path, token, audioFile)
 
           if (uploadError) {
             throw new Error('Failed to upload audio file: ' + uploadError.message)
