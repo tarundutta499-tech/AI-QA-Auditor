@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,9 +13,15 @@ export default async function ScorecardsPage() {
 
   const { data: dbUser } = await supabase.from('users').select('company_id').eq('id', user.id).single()
   
+  const getAdminClient = () => createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
   let scorecards: any[] = []
   if (dbUser) {
-    const { data } = await supabase.from('scorecards').select('*, scorecard_parameters(max_score, weightage)').eq('company_id', dbUser.company_id).order('created_at', { ascending: false })
+    const adminSupabase = getAdminClient()
+    const { data } = await adminSupabase.from('scorecards').select('*, scorecard_parameters(max_score, weightage)').eq('company_id', dbUser.company_id).order('created_at', { ascending: false })
     if (data) scorecards = data
   }
 
