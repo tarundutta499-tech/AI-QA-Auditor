@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { createBrowserClient } from '@supabase/ssr'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -27,6 +27,35 @@ export function UploadForm({ scorecards, agents, companyId }: { scorecards: any[
     formData.append('audit_type', auditType)
 
     try {
+      if (auditType === 'audio') {
+        const audioFile = formData.get('audio_file') as File
+        if (audioFile && audioFile.size > 0) {
+          const supabase = createBrowserClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+          )
+          
+          const fileExt = audioFile.name.split('.').pop()
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+          const storagePath = `${companyId}/${fileName}`
+          
+          setProgressText('Uploading audio file to secure storage...')
+          const { error: uploadError } = await supabase.storage
+            .from('audio_files')
+            .upload(storagePath, audioFile)
+
+          if (uploadError) {
+            throw new Error('Failed to upload audio file: ' + uploadError.message)
+          }
+
+          const { data: urlData } = supabase.storage.from('audio_files').getPublicUrl(storagePath)
+          
+          formData.delete('audio_file') // remove from payload so it doesn't hit Vercel limit
+          formData.append('audio_url', urlData.publicUrl)
+        }
+      }
+
+      setProgressText('Initializing AI audit...')
       const response = await fetch('/api/transcribe', {
         method: 'POST',
         body: formData,

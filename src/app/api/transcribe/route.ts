@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData()
     const auditType = formData.get('audit_type') as string || 'audio'
-    const audioFile = formData.get('audio_file') as File | null
+    const audioUrlFromClient = formData.get('audio_url') as string | null
     const chatTranscript = formData.get('chat_transcript') as string | null
     const agentId = formData.get('agent_id') as string
     const scorecardId = formData.get('scorecard_id') as string
@@ -24,8 +24,8 @@ export async function POST(req: NextRequest) {
     if (!agentId || !scorecardId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
-    if (auditType === 'audio' && !audioFile) {
-      return NextResponse.json({ error: 'Missing audio file' }, { status: 400 })
+    if (auditType === 'audio' && !audioUrlFromClient) {
+      return NextResponse.json({ error: 'Missing audio URL. Please upload the file again.' }, { status: 400 })
     }
     if (auditType === 'chat' && !chatTranscript) {
       return NextResponse.json({ error: 'Missing chat transcript' }, { status: 400 })
@@ -56,30 +56,23 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    let audioUrl = ''
+    let audioUrl = audioUrlFromClient || ''
     let geminiFile: any = null
     let tempFilePath = ''
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 
-    if (auditType === 'audio' && audioFile) {
-      const buffer = Buffer.from(await audioFile.arrayBuffer())
-      const tempFileName = `${uuidv4()}-${audioFile.name}`
+    if (auditType === 'audio' && audioUrl) {
+      const fetchResponse = await fetch(audioUrl)
+      if (!fetchResponse.ok) throw new Error("Failed to download audio from storage")
+      
+      const buffer = Buffer.from(await fetchResponse.arrayBuffer())
+      const tempFileName = `${uuidv4()}.mp3`
       tempFilePath = path.join(os.tmpdir(), tempFileName)
       await writeFile(tempFilePath, buffer)
 
-      const storagePath = `${companyId}/${tempFileName}`
-      const { error: storageError } = await adminSupabase.storage
-        .from('audio_files')
-        .upload(storagePath, audioFile)
-        
-      if (!storageError) {
-        const { data } = adminSupabase.storage.from('audio_files').getPublicUrl(storagePath)
-        audioUrl = data.publicUrl
-      }
-
       geminiFile = await ai.files.upload({
         file: tempFilePath,
-        config: { mimeType: audioFile.type || 'audio/mp3' },
+        config: { mimeType: 'audio/mp3' },
       })
     }
 
