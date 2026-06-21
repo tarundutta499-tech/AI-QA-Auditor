@@ -1,120 +1,100 @@
-"use client"
-
-import { useEffect, useState } from "react"
-import { createBrowserClient } from '@supabase/ssr'
+import { createClient } from '@/utils/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Copy, CheckCircle2, FileAudio, Users, BarChart3, Activity, Eye, EyeOff } from "lucide-react"
+import { Copy, CheckCircle2, FileAudio, Users, BarChart3, Activity } from "lucide-react"
 import Link from "next/link"
+import { DashboardClient } from '@/components/dashboard/dashboard-client'
 
-export default function DashboardPage() {
-  const [copied, setCopied] = useState(false)
-  const [userName, setUserName] = useState("")
-  const [showKey, setShowKey] = useState(false)
-  const [role, setRole] = useState("agent")
+export default async function DashboardPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const { data: userData } = await supabase
+    .from('users')
+    .select('name, company_id, role')
+    .eq('id', user.id)
+    .single()
+    
+  if (!userData) return null
   
-  const [metrics, setMetrics] = useState({
+  const userName = userData.name || "User"
+  const role = userData.role || "agent"
+  const companyId = userData.company_id
+  const isManager = role !== 'agent'
+
+  let metrics = {
     totalCalls: 0,
     avgEmpathy: 0,
     avgCompliance: 0,
     activeAgents: 0
-  })
+  }
   
-  const [apiData, setApiData] = useState({
-    key: "Loading...",
-    webhookUrl: "Loading..."
-  })
-
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
-  useEffect(() => {
-    async function fetchDashboardData() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { data: userData } = await supabase
-        .from('users')
-        .select('name, company_id, role')
-        .eq('id', user.id)
-        .single()
-        
-      if (!userData) return
-      
-      setUserName(userData.name || "User")
-      setRole(userData.role || "agent")
-      
-      const companyId = userData.company_id
-      if (!companyId) return
-
-      // Fetch calls
-      let callsQuery = supabase.from('calls').select('id', { count: 'exact' }).eq('company_id', companyId)
-      if (userData.role === 'agent') {
-        callsQuery = callsQuery.eq('agent_id', user.id)
-      }
-      const { data: callsData, count: callsCount } = await callsQuery
-
-      // Active agents count
-      const { count: agentsCount } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .eq('company_id', companyId)
-        .eq('role', 'agent')
-
-      const callIds = callsData?.map((c: any) => c.id) || []
-
-      let avgCompliance = 0
-      let avgEmpathy = 0
-      
-      if (callIds.length > 0) {
-        const { data: auditsData } = await supabase
-          .from('audits')
-          .select('compliance_percent, empathy_score')
-          .in('call_id', callIds)
-          
-        if (auditsData && auditsData.length > 0) {
-          const totalComp = auditsData.reduce((acc: number, a: any) => acc + (Number(a.compliance_percent) || 0), 0)
-          const totalEmp = auditsData.reduce((acc: number, a: any) => acc + (Number(a.empathy_score) || 0), 0)
-          
-          avgCompliance = Math.round(totalComp / auditsData.length)
-          avgEmpathy = Math.round(totalEmp / auditsData.length)
-        }
-      }
-
-      setMetrics({
-        totalCalls: callsCount || 0,
-        avgCompliance,
-        avgEmpathy,
-        activeAgents: agentsCount || 0
-      })
-
-      if (userData.role !== 'agent') {
-        const { data: keyData } = await supabase
-          .from('api_keys')
-          .select('key_value')
-          .eq('company_id', companyId)
-          .single()
-          
-        const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://api.qacopilot.ai'
-          
-        setApiData({
-          key: keyData?.key_value || "No API key generated yet",
-          webhookUrl: `${baseUrl}/api/v1/webhooks/genesys`
-        })
-      }
-    }
-    fetchDashboardData()
-  }, [])
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  let apiData = {
+    key: "No API key generated yet",
+    webhookUrl: "https://api.qacopilot.ai/api/v1/webhooks/genesys" // Will be overridden in client
   }
 
-  const isManager = role !== 'agent'
+  if (companyId) {
+    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
+    const adminClient = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    // Fetch calls
+    let callsQuery = adminClient.from('calls').select('id', { count: 'exact' }).eq('company_id', companyId)
+    if (role === 'agent') {
+      callsQuery = callsQuery.eq('agent_id', user.id)
+    }
+    const { data: callsData, count: callsCount } = await callsQuery
+
+    // Active agents count
+    const { count: agentsCount } = await adminClient
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .eq('company_id', companyId)
+      .eq('role', 'agent')
+
+    const callIds = callsData?.map((c: any) => c.id) || []
+
+    let avgCompliance = 0
+    let avgEmpathy = 0
+    
+    if (callIds.length > 0) {
+      const { data: auditsData } = await adminClient
+        .from('audits')
+        .select('compliance_percent, empathy_score')
+        .in('call_id', callIds)
+        
+      if (auditsData && auditsData.length > 0) {
+        const totalComp = auditsData.reduce((acc: number, a: any) => acc + (Number(a.compliance_percent) || 0), 0)
+        const totalEmp = auditsData.reduce((acc: number, a: any) => acc + (Number(a.empathy_score) || 0), 0)
+        
+        avgCompliance = Math.round(totalComp / auditsData.length)
+        avgEmpathy = Math.round(totalEmp / auditsData.length)
+      }
+    }
+
+    metrics = {
+      totalCalls: callsCount || 0,
+      avgCompliance,
+      avgEmpathy,
+      activeAgents: agentsCount || 0
+    }
+
+    if (isManager) {
+      const { data: keyData } = await adminClient
+        .from('api_keys')
+        .select('key_value')
+        .eq('company_id', companyId)
+        .single()
+        
+      if (keyData?.key_value) {
+        apiData.key = keyData.key_value
+      }
+    }
+  }
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -184,45 +164,9 @@ export default function DashboardPage() {
       {isManager && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
           
-          {/* Telephony Integration Webhook Instructions */}
+          {/* Telephony Integration Webhook Instructions (Client Component for Copy/Reveal) */}
           <div className="lg:col-span-2">
-            <Card className="h-full">
-              <CardHeader>
-                <CardTitle className="text-xl">Telephony Integrations (Webhooks)</CardTitle>
-                <CardDescription>
-                  Connect QA Insight AI directly to your phone system (Genesys, Twilio, Amazon Connect). 
-                  Once connected, calls will be automatically audited by AI the second the customer hangs up.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                
-                <div className="bg-muted/50 p-4 rounded-xl border">
-                  <div className="text-sm font-medium text-muted-foreground mb-2">Your Production Webhook URL</div>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 bg-background p-3 rounded-lg text-green-500 font-mono text-sm border">
-                      {apiData.webhookUrl}
-                    </code>
-                    <Button variant="outline" onClick={() => copyToClipboard(apiData.webhookUrl)}>
-                      {copied ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="bg-muted/50 p-4 rounded-xl border">
-                  <div className="text-sm font-medium text-muted-foreground mb-2">Secret API Key</div>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 bg-background p-3 rounded-lg text-blue-500 font-mono text-sm border">
-                      {showKey ? apiData.key : "••••••••••••••••••••••••••••"}
-                    </code>
-                    <Button variant="outline" onClick={() => setShowKey(!showKey)}>
-                      {showKey ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
-                      {showKey ? "Hide" : "Reveal Key"}
-                    </Button>
-                  </div>
-                </div>
-
-              </CardContent>
-            </Card>
+            <DashboardClient apiData={apiData} />
           </div>
 
           {/* Quick Links */}
