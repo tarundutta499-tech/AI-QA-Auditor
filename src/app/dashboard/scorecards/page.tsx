@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { DeleteScorecardButton } from '@/components/scorecards/delete-scorecard-button'
 
 export default async function ScorecardsPage() {
   const supabase = await createClient()
@@ -71,9 +72,12 @@ export default async function ScorecardsPage() {
                       <TableCell>{totalWeightage.toFixed(1)}</TableCell>
                       <TableCell>{new Date(s.created_at).toLocaleDateString()}</TableCell>
                       <TableCell className="text-right">
-                        <Link href={`/dashboard/scorecards/${s.id}/edit`}>
-                          <Button variant="outline" size="sm">Edit</Button>
-                        </Link>
+                        <div className="flex items-center justify-end">
+                          <Link href={`/dashboard/scorecards/${s.id}/edit`}>
+                            <Button variant="outline" size="sm">Edit</Button>
+                          </Link>
+                          <DeleteScorecardButton id={s.id} />
+                        </div>
                       </TableCell>
                     </TableRow>
                   )

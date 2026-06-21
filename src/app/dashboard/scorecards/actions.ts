@@ -101,3 +101,20 @@ export async function updateScorecard(formData: FormData) {
   revalidatePath('/dashboard/scorecards')
   return { success: true }
 }
+
+export async function deleteScorecard(id: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("Unauthorized")
+
+  // Use Admin client to bypass RLS in case policies are missing
+  const { error } = await getAdminClient().from('scorecards').delete().eq('id', id)
+  
+  if (error) {
+    console.error('Error deleting scorecard', error)
+    throw new Error('Failed to delete scorecard: ' + error.message)
+  }
+
+  revalidatePath('/dashboard/scorecards')
+  return { success: true }
+}
