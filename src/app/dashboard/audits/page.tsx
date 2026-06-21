@@ -51,6 +51,8 @@ export default async function AuditsPage(props: { searchParams?: Promise<{ [key:
     if (dbUser.role === 'agent') {
       query = query.eq('calls.agent_id', dbUser.id)
     } else {
+      // CRITICAL: Managers/Admins must only see calls for their own company
+      query = query.eq('calls.company_id', dbUser.company_id)
       if (agentFilter) {
         query = query.eq('calls.agent_id', agentFilter)
       }

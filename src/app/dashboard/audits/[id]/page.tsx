@@ -10,6 +10,11 @@ export default async function AuditResultPage(props: { params: Promise<{ id: str
   const id = params.id
   
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return <div className="p-8">Unauthorized</div>
+  
+  const { data: dbUser } = await supabase.from('users').select('company_id, role').eq('id', user.id).single()
+  
   const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
   const getAdminClient = () => createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,6 +24,11 @@ export default async function AuditResultPage(props: { params: Promise<{ id: str
   
   const { data: audit } = await adminClient.from('audits').select('*, calls(*, users(name)), scorecards(name)').eq('id', id).single()
   if (!audit) return <div className="p-8">Audit not found</div>
+
+  // CRITICAL: Prevent IDOR (Insecure Direct Object Reference) across vendors
+  if (dbUser?.role !== 'super_admin' && audit.calls?.company_id !== dbUser?.company_id) {
+    return <div className="p-8 text-red-500 font-bold">Unauthorized: You do not have permission to view this audit.</div>
+  }
 
   const { data: results } = await adminClient.from('audit_results').select('*, scorecard_parameters(name, max_score)').eq('audit_id', id)
   
