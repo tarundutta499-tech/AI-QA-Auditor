@@ -88,7 +88,12 @@ Return the result STRICTLY as a JSON object with this exact structure:
 
   const contents: any[] = []
   if (geminiFile) {
-    contents.push(geminiFile)
+    contents.push({
+      fileData: {
+        fileUri: geminiFile.uri,
+        mimeType: geminiFile.mimeType
+      }
+    })
   } else if (chatTranscript) {
     contents.push(`Here is the chat transcript to audit:\n\n${chatTranscript}`)
   } else {
