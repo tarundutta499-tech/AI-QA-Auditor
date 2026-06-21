@@ -50,19 +50,29 @@ export default async function AuditResultPage(props: { params: Promise<{ id: str
     <div className="p-8 max-w-6xl mx-auto">
       <PrintWrapper>
         <div className="space-y-8">
-          <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Audit Result: {audit.calls?.client_name}</h1>
           <p className="text-muted-foreground mt-2">
             Agent: {audit.calls?.users?.name} | Scorecard: {audit.scorecards?.name}
           </p>
         </div>
-        <div className="flex items-center gap-6">
-          <div className="text-right">
-            <div className="text-4xl font-bold text-primary">{audit.compliance_percent}%</div>
-            <div className="text-sm text-muted-foreground">Raw Score: {audit.overall_score}</div>
+        <div className="flex flex-wrap items-center gap-6 bg-card border rounded-xl p-4 shadow-sm">
+          <div className="text-center px-4 border-r border-border">
+            <div className="text-sm font-medium text-muted-foreground mb-1" title="Percentage of total possible points earned on the QA scorecard.">Compliance Score</div>
+            <div className="text-4xl font-bold text-green-500">{audit.compliance_percent}%</div>
+            <div className="text-xs text-muted-foreground mt-1">Raw Score: {audit.overall_score} pts</div>
           </div>
-          <CalibrationButton auditId={id} aiScore={audit.compliance_percent} />
+          
+          <div className="text-center px-4 border-r border-border">
+            <div className="text-sm font-medium text-muted-foreground mb-1" title="AI evaluation of the agent's tone, active listening, and empathy towards the customer.">Empathy Score</div>
+            <div className="text-4xl font-bold text-blue-500">{audit.empathy_score || 0}%</div>
+            <div className="text-xs text-muted-foreground mt-1">AI Evaluated</div>
+          </div>
+
+          <div className="px-4">
+            <CalibrationButton auditId={id} aiScore={audit.compliance_percent} />
+          </div>
         </div>
       </div>
 
