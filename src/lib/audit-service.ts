@@ -62,7 +62,8 @@ Analyze the provided ${auditType === 'audio' ? 'audio call recording' : 'text ch
 2. Identify any "dead air" (silences > 30 seconds) or unusually long delays in response.
 3. Audit the call based on the following scorecard parameters:
 ${parameters.map((p: any) => `- ${p.name} (Max Score: ${p.max_score}, Weight: ${p.weightage})`).join('\n')}
-4. Provide coaching feedback.
+4. Evaluate the agent's tone and empathy out of 100.
+5. Provide coaching feedback.
 
 Return the result STRICTLY as a JSON object with this exact structure:
 {
@@ -82,7 +83,8 @@ Return the result STRICTLY as a JSON object with this exact structure:
     "improvement_areas": "String",
     "recommended_actions": "String"
   },
-  "overall_compliance_percent": 100
+  "overall_compliance_percent": 100,
+  "empathy_score": 100
 }
 `
 
@@ -106,6 +108,8 @@ Return the result STRICTLY as a JSON object with this exact structure:
     model: 'gemini-2.5-flash',
     contents: contents,
     config: {
+      temperature: 0.0,
+      topP: 0.1,
       responseMimeType: "application/json",
     }
   })
@@ -135,7 +139,8 @@ Return the result STRICTLY as a JSON object with this exact structure:
     call_id: callId,
     scorecard_id: scorecardId,
     overall_score: obtainedScore,
-    compliance_percent: analysis.overall_compliance_percent
+    compliance_percent: analysis.overall_compliance_percent,
+    empathy_score: analysis.empathy_score || 0
   }).select().single()
 
   if (audit) {
