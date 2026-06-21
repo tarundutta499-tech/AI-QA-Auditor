@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { UploadForm } from '@/components/audits/upload-form'
 
 export default async function NewAuditPage() {
@@ -9,14 +10,20 @@ export default async function NewAuditPage() {
 
   const { data: dbUser } = await supabase.from('users').select('company_id').eq('id', user.id).single()
   
+  const getAdminClient = () => createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
   let scorecards: any[] = []
   let agents: any[] = []
 
   if (dbUser) {
-    const { data: scData } = await supabase.from('scorecards').select('id, name').eq('company_id', dbUser.company_id)
+    const adminClient = getAdminClient()
+    const { data: scData } = await adminClient.from('scorecards').select('id, name').eq('company_id', dbUser.company_id)
     if (scData) scorecards = scData
 
-    const { data: agData } = await supabase.from('users').select('id, name').eq('company_id', dbUser.company_id)
+    const { data: agData } = await adminClient.from('users').select('id, name').eq('company_id', dbUser.company_id)
     if (agData) agents = agData
   }
 
