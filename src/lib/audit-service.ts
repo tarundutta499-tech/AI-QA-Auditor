@@ -53,21 +53,50 @@ export async function processAudit({
 
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
   
-  const prompt = `
-You are an expert QA Auditor for customer support interactions. 
-Analyze the provided ${auditType === 'audio' ? 'audio call recording' : 'text chat transcript'}.${knowledgeContext}
+  let transcriptData: any = null
 
-1. Generate a standardized transcript with speaker labels (Agent, Customer) and timestamps.
-   IMPORTANT MASKING RULE: You MUST redact all Personally Identifiable Information (PII) including names, phone numbers, addresses, credit cards, company names, app names, or service names from the transcript text. Replace them with [REDACTED].
-2. Identify any "dead air" (silences > 30 seconds) or unusually long delays in response.
-3. Audit the call based on the following scorecard parameters:
+  // PASS 1: Transcription (if audio)
+  if (geminiFile) {
+    const transcriptPrompt = `
+Generate a precise, standardized transcript of this audio call with speaker labels (Agent, Customer) and timestamps.
+IMPORTANT MASKING RULE: You MUST redact all Personally Identifiable Information (PII) including names, phone numbers, addresses, credit cards, company names, app names, or service names from the transcript text. Replace them with [REDACTED].
+Return STRICTLY a JSON array of objects with this exact structure, and absolutely nothing else:
+[
+  { "speaker": "Agent", "timestamp": "0:00", "text": "Hello" }
+]
+`
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [
+        { fileData: { fileUri: geminiFile.uri, mimeType: geminiFile.mimeType } },
+        transcriptPrompt
+      ],
+      config: { temperature: 0.0, topP: 0.1, responseMimeType: "application/json" }
+    })
+    
+    if (!response.text) throw new Error("Failed to generate transcript from audio.")
+    transcriptData = JSON.parse(response.text.replace(/```json\n?|```/g, '').trim())
+  } else if (chatTranscript) {
+    transcriptData = [ { speaker: "Chat", timestamp: "0:00", text: chatTranscript } ]
+  } else {
+    throw new Error("No audio file or chat transcript provided")
+  }
+
+  // PASS 2: QA Audit (based exclusively on the generated text transcript)
+  const auditPrompt = `
+You are an expert QA Auditor for customer support interactions. 
+Analyze the following transcript of the interaction:
+${JSON.stringify(transcriptData)}
+${knowledgeContext}
+
+1. Identify any "dead air" (silences > 30 seconds) or unusually long delays in response by analyzing the timestamps between messages.
+2. Audit the call based strictly on the following scorecard parameters. For each parameter, you must extract exact evidence from the transcript BEFORE scoring.
 ${parameters.map((p: any) => `- ${p.name} (Max Score: ${p.max_score}, Weight: ${p.weightage})`).join('\n')}
-4. Evaluate the agent's tone and empathy out of 100.
-5. Provide coaching feedback.
+3. Evaluate the agent's tone and empathy out of 100 based on the text.
+4. Provide coaching feedback.
 
 Return the result STRICTLY as a JSON object with this exact structure:
 {
-  "transcript": [ { "speaker": "Agent", "timestamp": "0:00", "text": "Hello" } ],
   "dead_air_events": [ { "start_time": "0:15", "duration_seconds": 35, "impact": "negative" } ],
   "audit_results": [
     {
@@ -88,25 +117,9 @@ Return the result STRICTLY as a JSON object with this exact structure:
 }
 `
 
-  const contents: any[] = []
-  if (geminiFile) {
-    contents.push({
-      fileData: {
-        fileUri: geminiFile.uri,
-        mimeType: geminiFile.mimeType
-      }
-    })
-  } else if (chatTranscript) {
-    contents.push(`Here is the chat transcript to audit:\n\n${chatTranscript}`)
-  } else {
-    throw new Error("No audio file or chat transcript provided")
-  }
-  
-  contents.push(prompt)
-
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash',
-    contents: contents,
+    contents: [auditPrompt],
     config: {
       temperature: 0.0,
       topP: 0.1,
@@ -115,7 +128,7 @@ Return the result STRICTLY as a JSON object with this exact structure:
   })
 
   const resultText = response.text
-  if (!resultText) throw new Error("No response from Gemini")
+  if (!resultText) throw new Error("No response from Gemini Audit Pass")
   
   const cleanJsonText = resultText.replace(/```json\n?|```/g, '').trim()
   const analysis = JSON.parse(cleanJsonText)
@@ -130,7 +143,7 @@ Return the result STRICTLY as a JSON object with this exact structure:
   // Insert Transcript
   await supabase.from('transcripts').insert({
     call_id: callId,
-    content: analysis.transcript,
+    content: transcriptData,
     dead_air_events: analysis.dead_air_events
   })
 
