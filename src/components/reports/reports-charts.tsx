@@ -1,10 +1,14 @@
 "use client"
 
+import { useState } from 'react'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { TrendingUp, AlertTriangle, ShieldCheck, FileAudio } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export function ReportsCharts({ data, agentData, role }: { data: any[], agentData: any[], role: string }) {
+  const [timeframe, setTimeframe] = useState<'all' | 'daily' | 'weekly' | 'monthly'>('all')
+
   const avgEmpathy = data.length > 0 
     ? Math.round(data.reduce((acc, curr) => acc + (curr.empathy_score || 0), 0) / data.length) 
     : 0
@@ -13,6 +17,40 @@ export function ReportsCharts({ data, agentData, role }: { data: any[], agentDat
     : 0
 
   const isManager = role !== 'agent'
+
+  const getGroupedData = () => {
+    if (timeframe === 'all') return data
+
+    const grouped: Record<string, { compSum: number, empSum: number, count: number }> = {}
+
+    data.forEach(item => {
+      const d = new Date(item.created_at)
+      let key = ''
+      
+      if (timeframe === 'daily') {
+        key = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+      } else if (timeframe === 'weekly') {
+        const firstDay = new Date(d)
+        firstDay.setDate(firstDay.getDate() - firstDay.getDay())
+        key = `Week of ${firstDay.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`
+      } else if (timeframe === 'monthly') {
+        key = d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+      }
+
+      if (!grouped[key]) grouped[key] = { compSum: 0, empSum: 0, count: 0 }
+      grouped[key].compSum += (item.compliance_score || 0)
+      grouped[key].empSum += (item.empathy_score || 0)
+      grouped[key].count += 1
+    })
+
+    return Object.entries(grouped).map(([key, stats]) => ({
+      name: key,
+      compliance_score: Math.round(stats.compSum / stats.count),
+      empathy_score: Math.round(stats.empSum / stats.count)
+    }))
+  }
+
+  const chartData = getGroupedData()
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -68,14 +106,29 @@ export function ReportsCharts({ data, agentData, role }: { data: any[], agentDat
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <Card className="border-border/50 shadow-xl">
-              <CardHeader>
-                <CardTitle>Quality Assurance Trends</CardTitle>
-                <CardDescription>Empathy vs Compliance scores over time</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <div>
+                  <CardTitle>Quality Assurance Trends</CardTitle>
+                  <CardDescription>Empathy vs Compliance scores over time</CardDescription>
+                </div>
+                <div className="w-[140px]">
+                  <Select value={timeframe} onValueChange={(v: any) => setTimeframe(v)}>
+                    <SelectTrigger className="h-8">
+                      <SelectValue placeholder="View by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Every Call</SelectItem>
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="h-[400px] w-full mt-4">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
                       <XAxis dataKey="name" className="text-muted-foreground text-xs" />
                       <YAxis className="text-muted-foreground text-xs" domain={[0, 100]} />
