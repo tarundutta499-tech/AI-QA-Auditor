@@ -101,10 +101,10 @@ Return the result STRICTLY as a JSON object with this exact structure:
   "audit_results": [
     {
       "parameter_name": "Greeting",
-      "obtained_score": 10,
+      "evidence": "Extract the exact quote(s) from the transcript here FIRST.",
+      "reasoning": "Write a detailed logical explanation based strictly on the evidence.",
       "is_passed": true,
-      "evidence": "Exact quote from transcript",
-      "reasoning": "Why this score was given"
+      "obtained_score": 10
     }
   ],
   "coaching": {
