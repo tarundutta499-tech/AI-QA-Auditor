@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createScorecard, updateScorecard } from '@/app/dashboard/scorecards/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,6 +12,8 @@ import { Switch } from '@/components/ui/switch'
 import { Plus, Trash2 } from 'lucide-react'
 
 export function ScorecardForm({ initialData }: { initialData?: any }) {
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
   const [parameters, setParameters] = useState(
     initialData?.parameters?.length > 0
       ? initialData.parameters
@@ -35,8 +38,26 @@ export function ScorecardForm({ initialData }: { initialData?: any }) {
   const totalMaxScore = parameters.reduce((sum: number, p: any) => sum + (Number(p.max_score) || 0), 0)
   const totalWeightage = parameters.reduce((sum: number, p: any) => sum + (Number(p.weightage) || 0), 0)
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsLoading(true)
+    try {
+      const formData = new FormData(e.currentTarget)
+      const result = await (initialData ? updateScorecard(formData) : createScorecard(formData))
+      if (result?.success) {
+        router.push('/dashboard/scorecards')
+        router.refresh()
+      }
+    } catch (error) {
+      console.error("Form submission failed:", error)
+      alert("Failed to save scorecard. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
-    <form action={async (formData) => { await (initialData ? updateScorecard(formData) : createScorecard(formData)) }} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-8">
       {initialData && <input type="hidden" name="id" value={initialData.id} />}
       <Card>
         <CardHeader>
@@ -137,8 +158,10 @@ export function ScorecardForm({ initialData }: { initialData?: any }) {
           </div>
         </div>
         <div className="flex justify-end gap-4">
-          <Button variant="outline" type="button" onClick={() => window.history.back()}>Cancel</Button>
-          <Button type="submit">Save Scorecard</Button>
+          <Button variant="outline" type="button" onClick={() => window.history.back()} disabled={isLoading}>Cancel</Button>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Saving..." : "Save Scorecard"}
+          </Button>
         </div>
       </div>
     </form>
