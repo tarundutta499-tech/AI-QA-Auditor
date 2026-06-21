@@ -7,7 +7,7 @@ import { TrendingUp, AlertTriangle, ShieldCheck, FileAudio } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export function ReportsCharts({ data, agentData, role }: { data: any[], agentData: any[], role: string }) {
-  const [timeframe, setTimeframe] = useState<'all' | 'daily' | 'weekly' | 'monthly'>('all')
+  const [timeframe, setTimeframe] = useState<'all' | 'daily' | 'weekly' | 'monthly'>('daily')
 
   const avgEmpathy = data.length > 0 
     ? Math.round(data.reduce((acc, curr) => acc + (curr.empathy_score || 0), 0) / data.length) 
@@ -160,8 +160,8 @@ export function ReportsCharts({ data, agentData, role }: { data: any[], agentDat
             {isManager && agentData.length > 0 && (
               <Card className="border-border/50 shadow-xl">
                 <CardHeader>
-                  <CardTitle>Agent Leaderboard</CardTitle>
-                  <CardDescription>Average performance per agent</CardDescription>
+                  <CardTitle>Overall Team Performance</CardTitle>
+                  <CardDescription>All-time average scores by team member</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="h-[400px] w-full mt-4">
