@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { GoogleGenAI } from '@google/genai'
 import { writeFile, unlink } from 'fs/promises'
 import os from 'os'
 import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
-import { processAudit } from '@/lib/audit-service'
 
 export const maxDuration = 60; // Allow Vercel functions to run up to 60 seconds
 
@@ -31,7 +29,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing chat transcript' }, { status: 400 })
     }
 
-    const supabase = await createClient()
     const getAdminClient = () => createSupabaseClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -74,6 +71,7 @@ export async function POST(req: NextRequest) {
         file: tempFilePath,
         config: { mimeType: 'audio/mp3' },
       })
+      await unlink(tempFilePath).catch(console.error)
     }
 
     // 1. Create Call Record (Status: pending)
@@ -83,32 +81,23 @@ export async function POST(req: NextRequest) {
       client_name: clientName,
       audio_url: audioUrl,
       raw_chat: chatTranscript || null,
-      status: 'pending' // Technically it will be instantly processed below
+      status: 'pending'
     }).select().single()
 
     if (!call) throw new Error("Failed to create call record")
 
-    // 2. Process using the centralized AI Brain
-    const result = await processAudit({
-      supabase: adminSupabase,
-      callId: call.id,
-      scorecardId,
-      agentId,
-      auditType: auditType as 'audio' | 'chat',
-      geminiFile,
-      chatTranscript: chatTranscript || undefined
+    return NextResponse.json({ 
+      success: true, 
+      call_id: call.id,
+      gemini_file: geminiFile ? {
+        name: geminiFile.name,
+        uri: geminiFile.uri,
+        mimeType: geminiFile.mimeType
+      } : null
     })
 
-    // Cleanup temp files
-    if (geminiFile) {
-      await unlink(tempFilePath).catch(console.error)
-      await ai.files.delete({ name: geminiFile.name }).catch(console.error)
-    }
-
-    return NextResponse.json({ success: true, audit_id: result.audit_id })
-
   } catch (error: any) {
-    console.error('Transcription error:', error)
+    console.error('Transcription Init error:', error)
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 })
   }
 }

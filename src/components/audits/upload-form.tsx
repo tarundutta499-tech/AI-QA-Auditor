@@ -68,18 +68,44 @@ export function UploadForm({ scorecards, agents, companyId }: { scorecards: any[
         }
       }
 
-      setProgressText('Initializing AI audit...')
-      const response = await fetch('/api/transcribe', {
+      setProgressText('Transferring secure audio to AI Core...')
+      const initRes = await fetch('/api/transcribe/init', {
         method: 'POST',
         body: formData,
       })
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || 'Failed to process call')
+      if (!initRes.ok) {
+        const errorData = await initRes.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to initialize AI process')
       }
 
-      const result = await response.json()
+      const initData = await initRes.json()
+
+      setProgressText('AI is listening and grading the call...')
+      const processForm = new FormData()
+      processForm.append('call_id', initData.call_id)
+      processForm.append('scorecard_id', formData.get('scorecard_id') as string)
+      processForm.append('agent_id', formData.get('agent_id') as string)
+      processForm.append('audit_type', auditType)
+      
+      if (initData.gemini_file) {
+        processForm.append('gemini_file', JSON.stringify(initData.gemini_file))
+      }
+      if (auditType === 'chat') {
+        processForm.append('chat_transcript', formData.get('chat_transcript') as string)
+      }
+
+      const processRes = await fetch('/api/transcribe/process', {
+        method: 'POST',
+        body: processForm,
+      })
+
+      if (!processRes.ok) {
+        const errorData = await processRes.json().catch(() => ({}))
+        throw new Error(errorData.error || 'AI grading timed out or failed.')
+      }
+
+      const result = await processRes.json()
       router.push(`/dashboard/audits/${result.audit_id}`)
     } catch (error: any) {
       console.error(error)
