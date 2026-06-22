@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button"
 import { Copy, CheckCircle2, FileAudio, Users, BarChart3, Activity } from "lucide-react"
 import Link from "next/link"
 import { DashboardClient } from '@/components/dashboard/dashboard-client'
+import { DateFilter } from '@/components/dashboard/date-filter'
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
@@ -22,6 +23,17 @@ export default async function DashboardPage() {
   const role = userData.role || "agent"
   const companyId = userData.company_id
   const isManager = role !== 'agent'
+
+  const range = typeof searchParams.range === 'string' ? searchParams.range : 'all'
+  let fromDateStr: string | null = null
+  if (range !== 'all') {
+    const days = parseInt(range, 10)
+    if (!isNaN(days)) {
+      const fromDate = new Date()
+      fromDate.setDate(fromDate.getDate() - days)
+      fromDateStr = fromDate.toISOString()
+    }
+  }
 
   let metrics = {
     totalCalls: 0,
@@ -46,6 +58,9 @@ export default async function DashboardPage() {
     let callsQuery = adminClient.from('calls').select('id', { count: 'exact' }).eq('company_id', companyId).eq('status', 'audited')
     if (role === 'agent') {
       callsQuery = callsQuery.eq('agent_id', user.id)
+    }
+    if (fromDateStr) {
+      callsQuery = callsQuery.gte('created_at', fromDateStr)
     }
     const { data: callsData, count: callsCount } = await callsQuery
 
@@ -106,7 +121,8 @@ export default async function DashboardPage() {
             {isManager ? "Here is what is happening across your QA pipeline today." : "Here is your recent performance overview."}
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
+          <DateFilter />
           <Link href="/dashboard/reports">
             <Button>View {isManager ? "Analytics" : "My Scores"}</Button>
           </Link>
