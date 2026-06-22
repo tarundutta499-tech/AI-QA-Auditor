@@ -3,6 +3,8 @@ import Footer from "@/components/layout/Footer"
 import PricingSection from "@/components/home/PricingSection"
 import CTABanner from "@/components/home/CTABanner"
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: 'Pricing - QA Insight AI',
   description: 'Simple, transparent pricing for QA automation.',
