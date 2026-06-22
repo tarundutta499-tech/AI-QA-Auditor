@@ -37,7 +37,7 @@ export default function PricingSection() {
               "Automated Coaching",
               "Email Support"
             ]}
-            ctaText="Subscribe"
+            ctaText="Contact Sales"
             delay={0.2}
           />
           <PricingCard 
@@ -51,7 +51,7 @@ export default function PricingSection() {
               "Priority Support"
             ]}
             isPopular={true}
-            ctaText="Subscribe"
+            ctaText="Contact Sales"
             delay={0.3}
           />
           <PricingCard 
@@ -64,7 +64,7 @@ export default function PricingSection() {
               "API Integrations",
               "Priority Support"
             ]}
-            ctaText="Subscribe"
+            ctaText="Contact Sales"
             delay={0.4}
           />
           <PricingCard 
@@ -77,7 +77,7 @@ export default function PricingSection() {
               "SSO & SAML Security",
               "Custom BI Integrations"
             ]}
-            ctaText="Contact Us"
+            ctaText="Contact Sales"
             delay={0.5}
           />
         </div>

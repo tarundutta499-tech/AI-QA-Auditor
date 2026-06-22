@@ -27,39 +27,8 @@ export default function PricingCard({ tier, price, priceSuffix = "/mo", descript
     ? `₹${(parseInt(price.replace(/,/g, '').replace('₹', '')) * 0.8).toLocaleString()}` 
     : price
 
-  const handleSubscribe = async () => {
-    if (price === "Custom" || tier.includes("Pilot")) {
-      router.push('/contact')
-      return
-    }
-
-    setLoading(true)
-    try {
-      const res = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tier: tier })
-      })
-
-      if (res.status === 401) {
-        // Not logged in, redirect to login
-        router.push('/login?redirect=/pricing')
-        return
-      }
-
-      const data = await res.json()
-      
-      if (data.url) {
-        window.location.href = data.url
-      } else {
-        alert("Failed to start checkout: " + (data.error || "Unknown error"))
-        setLoading(false)
-      }
-    } catch (err) {
-      console.error(err)
-      alert("Something went wrong.")
-      setLoading(false)
-    }
+  const handleSubscribe = () => {
+    router.push('/contact')
   }
 
   return (
