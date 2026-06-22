@@ -12,42 +12,42 @@ export default function PricingSection() {
           <p className="text-xl text-gray-400 mb-10">No hidden fees. Scale your QA automation as you grow.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 max-w-screen-2xl mx-auto">
           <PricingCard 
-            tier="Pilot (30 Days)"
-            price="₹15k–20k"
+            tier="Pilot"
+            price="₹15,000"
             priceSuffix=""
             description="Test the AI with your own data for 30 days."
             features={[
+              "Up to 1,000 calls",
               "Full platform access",
               "1 Custom Scorecard",
-              "Guided onboarding",
-              "Performance baseline report"
+              "Performance baseline"
             ]}
             ctaText="Start Pilot"
             delay={0.1}
           />
           <PricingCard 
-            tier="Small BPO"
+            tier="Starter"
             price="₹25,000"
-            description="For teams of 25–100 agents."
+            description="Perfect for small teams."
             features={[
-              "25-100 Active Agents",
-              "Unlimited AI Audits",
-              "Automated Coaching Notes",
+              "Up to 5,000 calls/mo",
+              "Full platform access",
+              "Automated Coaching",
               "Email Support"
             ]}
             ctaText="Subscribe"
             delay={0.2}
           />
           <PricingCard 
-            tier="Medium BPO"
+            tier="Growth"
             price="₹50,000"
-            description="For teams of 100–300 agents."
+            description="For growing BPO operations."
             features={[
-              "100-300 Active Agents",
-              "Unlimited AI Audits",
-              "Advanced Analytics & Trends",
+              "Up to 15,000 calls/mo",
+              "Advanced Analytics",
+              "Unlimited Scorecards",
               "Priority Support"
             ]}
             isPopular={true}
@@ -55,17 +55,30 @@ export default function PricingSection() {
             delay={0.3}
           />
           <PricingCard 
+            tier="Scale"
+            price="₹1,00,000"
+            description="High volume automated QA."
+            features={[
+              "Up to 50,000 calls/mo",
+              "Custom AI fine-tuning",
+              "API Integrations",
+              "Priority Support"
+            ]}
+            ctaText="Subscribe"
+            delay={0.4}
+          />
+          <PricingCard 
             tier="Enterprise"
             price="Custom"
-            description="Custom limits and integrations for large scale operations."
+            description="Custom limits for massive scale operations."
             features={[
-              "300+ Active Agents",
+              "Unlimited calls",
               "Custom AI fine-tuning",
-              "Telephony API Integrations",
-              "Dedicated Account Manager"
+              "SSO & SAML Security",
+              "Custom BI Integrations"
             ]}
             ctaText="Contact Us"
-            delay={0.4}
+            delay={0.5}
           />
         </div>
       </div>
