@@ -81,9 +81,9 @@ export default function PricingCard({ tier, price, priceSuffix = "/mo", descript
       <div className="mb-8">
         <h3 className="text-xl font-medium text-white mb-2">{tier}</h3>
         <p className="text-gray-400 text-sm mb-6 h-10">{description}</p>
-        <div className="flex items-baseline gap-1">
-          <span className="text-4xl font-bold text-white">{displayPrice}</span>
-          {price !== "Custom" && priceSuffix && <span className="text-gray-400">{priceSuffix}</span>}
+        <div className="flex items-baseline gap-1 flex-wrap">
+          <span className="text-3xl font-bold text-white break-all">{displayPrice}</span>
+          {price !== "Custom" && priceSuffix && <span className="text-gray-400 shrink-0">{priceSuffix}</span>}
         </div>
         {isAnnual && price !== "Custom" && (
           <div className="text-green-400 text-xs mt-1 font-medium">Billed annually</div>
