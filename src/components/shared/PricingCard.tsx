@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation"
 interface PricingCardProps {
   tier: string
   price: string
+  priceSuffix?: string
   description: string
   features: string[]
   isPopular?: boolean
@@ -17,7 +18,7 @@ interface PricingCardProps {
   isAnnual?: boolean
 }
 
-export default function PricingCard({ tier, price, description, features, isPopular, ctaText, delay = 0, isAnnual = false }: PricingCardProps) {
+export default function PricingCard({ tier, price, priceSuffix = "/mo", description, features, isPopular, ctaText, delay = 0, isAnnual = false }: PricingCardProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
@@ -27,7 +28,7 @@ export default function PricingCard({ tier, price, description, features, isPopu
     : price
 
   const handleSubscribe = async () => {
-    if (price === "Custom") {
+    if (price === "Custom" || tier.includes("Pilot")) {
       router.push('/contact')
       return
     }
@@ -82,7 +83,7 @@ export default function PricingCard({ tier, price, description, features, isPopu
         <p className="text-gray-400 text-sm mb-6 h-10">{description}</p>
         <div className="flex items-baseline gap-1">
           <span className="text-4xl font-bold text-white">{displayPrice}</span>
-          {price !== "Custom" && <span className="text-gray-400">/mo</span>}
+          {price !== "Custom" && priceSuffix && <span className="text-gray-400">{priceSuffix}</span>}
         </div>
         {isAnnual && price !== "Custom" && (
           <div className="text-green-400 text-xs mt-1 font-medium">Billed annually</div>
