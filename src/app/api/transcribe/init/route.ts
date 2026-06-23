@@ -6,7 +6,7 @@ import os from 'os'
 import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
 
-export const maxDuration = 300; // Allow Vercel functions to run up to 5 minutes (requires Vercel Pro)
+export const maxDuration = 60; // Allow Vercel functions to run up to 60 seconds
 
 export async function POST(req: NextRequest) {
   try {
