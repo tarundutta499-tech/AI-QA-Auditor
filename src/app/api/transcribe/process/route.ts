@@ -3,7 +3,7 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { GoogleGenAI } from '@google/genai'
 import { processAudit } from '@/lib/audit-service'
 
-export const maxDuration = 60; // Allow Vercel functions to run up to 60 seconds
+export const maxDuration = 300; // Allow Vercel functions to run up to 5 minutes (requires Vercel Pro)
 
 export async function POST(req: NextRequest) {
   try {
