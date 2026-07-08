@@ -10,8 +10,8 @@ const inter = Inter({
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: "QA Insight AI - AI Quality Assurance",
-  description: "AI-powered quality assurance for customer support",
+  title: "Nexaviq - AI Quality Assurance",
+  description: "AI-powered quality assurance and conversation intelligence for modern contact centers",
 };
 
 export default function RootLayout({

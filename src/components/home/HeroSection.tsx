@@ -77,7 +77,7 @@ export default function HeroSection() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
               </span>
-              QA Insight AI 2.0 is Live
+              Nexaviq 2.0 is Live
             </div>
           </motion.div>
 
@@ -96,7 +96,7 @@ export default function HeroSection() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-lg md:text-xl text-gray-400 mb-10 leading-relaxed max-w-2xl mx-auto lg:mx-0"
           >
-            QA Insight AI uses AI to score every call, chat, and email against your SOPs — in seconds. No sampling. No bias. No missed issues.
+            Nexaviq uses AI to score every call, chat, and email against your SOPs — in seconds. No sampling. No bias. No missed issues.
           </motion.p>
 
           <motion.div 
@@ -192,7 +192,7 @@ export default function HeroSection() {
         className="mt-24 pt-10 border-t border-gray-800/50 w-full max-w-7xl mx-auto px-6 text-center"
       >
         <p className="text-lg md:text-xl text-gray-400 font-medium max-w-3xl mx-auto">
-          Transform your quality assurance. Automate 100% of your interactions, enforce strict compliance, and deliver world-class support with QA Insight AI.
+          Transform your quality assurance. Automate 100% of your interactions, enforce strict compliance, and deliver world-class support with Nexaviq.
         </p>
       </motion.div>
     </section>

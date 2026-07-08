@@ -17,7 +17,7 @@ export default function FeaturesPage() {
     },
     {
       title: "100% Interaction Coverage",
-      description: "Stop relying on 2% random sampling. QA Insight AI automatically ingests and audits every single call, chat, and email—ensuring nothing is missed.",
+      description: "Stop relying on 2% random sampling. Nexaviq automatically ingests and audits every single call, chat, and email—ensuring nothing is missed.",
       icon: Shield,
       align: "right"
     },
@@ -53,13 +53,13 @@ export default function FeaturesPage() {
     },
     {
       title: "Developer API Access",
-      description: "Integrate QA Insight AI directly into your existing tech stack. Stream interactions automatically from your telephony or CRM directly via REST API.",
+      description: "Integrate Nexaviq directly into your existing tech stack. Stream interactions automatically from your telephony or CRM directly via REST API.",
       icon: Code,
       align: "right"
     },
     {
       title: "Multi-Language Support",
-      description: "Auditing global or diverse teams? QA Insight AI natively understands and audits interactions in Hindi, English, and regional languages.",
+      description: "Auditing global or diverse teams? Nexaviq natively understands and audits interactions in Hindi, English, and regional languages.",
       icon: Globe,
       align: "left"
     }

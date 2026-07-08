@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ShieldCheck, Globe, Mail } from "lucide-react"
+import { ShieldCheck } from "lucide-react"
 
 export default function Footer() {
   return (
@@ -12,10 +12,10 @@ export default function Footer() {
             <div className="bg-gradient-to-br from-blue-500 to-violet-600 p-1.5 rounded-lg">
               <ShieldCheck className="h-5 w-5 text-white" />
             </div>
-            <span className="font-bold text-white tracking-tight">QA Insight AI</span>
+            <span className="font-bold text-white tracking-tight text-xl">Nexaviq</span>
           </Link>
           <p className="text-gray-400 text-sm max-w-xs">
-            AI-powered QA for modern BPOs. Automatically audit 100% of your customer interactions with unprecedented accuracy.
+            AI-powered Quality Assurance and Conversation Intelligence platform for Contact Centers, BPOs, and Enterprises.
           </p>
         </div>
 
@@ -29,11 +29,13 @@ export default function Footer() {
           </ul>
         </div>
         
-        {/* Company Column */}
+        {/* Legal & Company Column */}
         <div>
           <h4 className="text-white font-semibold mb-4">Company</h4>
           <ul className="space-y-2 text-sm text-gray-400">
             <li><Link href="/contact" className="hover:text-blue-400 transition-colors">Contact</Link></li>
+            <li><Link href="/terms" className="hover:text-blue-400 transition-colors">Terms of Service</Link></li>
+            <li><Link href="/privacy" className="hover:text-blue-400 transition-colors">Privacy Policy</Link></li>
           </ul>
         </div>
 
@@ -41,7 +43,7 @@ export default function Footer() {
       
       <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-gray-800/50 flex flex-col md:flex-row items-center justify-between gap-4">
         <p className="text-gray-500 text-sm flex gap-4">
-          <span>© 2026 QA Insight AI. All rights reserved.</span>
+          <span>© 2026 Nexaviq Technologies Pvt. Ltd. All rights reserved.</span>
         </p>
       </div>
     </footer>

@@ -26,7 +26,7 @@ export default async function BillingPage() {
           <CreditCard className="text-purple-500 w-8 h-8" />
           Billing & Subscription
         </h1>
-        <p className="text-muted-foreground mt-2">Manage your QA Insight AI plan and billing details.</p>
+        <p className="text-muted-foreground mt-2">Manage your Nexaviq plan and billing details.</p>
       </div>
 
       <Card className="bg-[#0B1120] border-gray-800 shadow-xl">

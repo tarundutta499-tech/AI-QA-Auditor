@@ -6,7 +6,7 @@ import CTABanner from "@/components/home/CTABanner"
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: 'Pricing - QA Insight AI',
+  title: 'Pricing - Nexaviq',
   description: 'Simple, transparent pricing for QA automation.',
 }
 

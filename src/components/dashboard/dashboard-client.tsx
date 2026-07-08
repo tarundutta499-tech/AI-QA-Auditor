@@ -31,7 +31,7 @@ export function DashboardClient({ apiData }: { apiData: { key: string, webhookUr
       <CardHeader>
         <CardTitle className="text-xl">Telephony Integrations (Webhooks)</CardTitle>
         <CardDescription>
-          Connect QA Insight AI directly to your phone system (Genesys, Twilio, Amazon Connect). 
+          Connect Nexaviq directly to your phone system (Genesys, Twilio, Amazon Connect). 
           Once connected, calls will be automatically audited by AI the second the customer hangs up.
         </CardDescription>
       </CardHeader>

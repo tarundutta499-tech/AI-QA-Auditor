@@ -58,7 +58,7 @@ export default function ContactPage() {
             <div>
               <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">Let's Talk Quality</h1>
               <p className="text-xl text-gray-400">
-                Tell us about your team and we'll show you exactly how QA Insight AI fits your workflow. We typically respond within 4 hours.
+                Tell us about your team and we'll show you exactly how Nexaviq fits your workflow. We typically respond within 4 hours.
               </p>
             </div>
             
