@@ -17,8 +17,6 @@ export function Sidebar({ role = 'agent' }: { role?: string }) {
     { label: 'Analytics & Reports', href: '/dashboard/reports', icon: BarChart3 },
     { label: 'Scorecards', href: '/dashboard/scorecards', icon: ListChecks },
     { label: 'Knowledge Base', href: '/dashboard/knowledge', icon: BookOpen },
-    { label: 'DSAT Analysis', href: '/dashboard/dsat', icon: AlertTriangle },
-    { label: 'Calibrations', href: '/dashboard/calibrations', icon: Scale },
     { label: 'Team Members', href: '/dashboard/agents', icon: Users },
     { label: 'Billing', href: '/dashboard/billing', icon: CreditCard },
     { label: 'Settings', href: '/dashboard/settings', icon: Settings },

@@ -161,8 +161,7 @@ export function ReportsCharts({
             { id: 'leaderboard', label: 'Leaderboard' },
             { id: 'distribution', label: 'Bell Curve' },
             { id: 'pareto', label: 'Root Cause' },
-            { id: 'coaching', label: 'Coaching ROI' },
-            { id: 'calibration', label: 'QA Calibration' }
+            { id: 'coaching', label: 'Coaching ROI' }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -556,64 +555,6 @@ export function ReportsCharts({
                             strokeWidth={3} 
                           />
                         </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 6: QA CALIBRATION */}
-          {activeTab === 'calibration' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              <div className="lg:col-span-4 space-y-4">
-                <Card className="bg-[#0B1120] border-gray-800 shadow-xl p-6 space-y-4 text-gray-300">
-                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-blue-500" />
-                    Calibration Metrics
-                  </h3>
-                  <p className="text-sm leading-relaxed text-gray-400">
-                    Calibration verifies alignment between human QA auditors and AI audits to ensure consistency and prevent bias.
-                  </p>
-                  
-                  <div className="pt-4 border-t border-gray-800 space-y-3">
-                    <div className="flex justify-between items-center text-xs">
-                      <span>Total Calibrated Calls</span>
-                      <span className="font-bold text-white">{activeCalibrationData.length}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <span>Average Score Variance</span>
-                      <span className="font-bold text-green-400">1.2%</span>
-                    </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <span>Agreement Rate</span>
-                      <span className="font-bold text-blue-400">96.8%</span>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-
-              <div className="lg:col-span-8">
-                <Card className="bg-[#0B1120] border-gray-800 shadow-xl">
-                  <CardHeader>
-                    <CardTitle className="text-white">AI vs. Human QA Scores</CardTitle>
-                    <CardDescription className="text-gray-400">Comparison of scores across calibrated interactions (lower gap = higher alignment)</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[350px] w-full mt-4">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={activeCalibrationData} margin={{ top: 10, right: 30, left: 10, bottom: 5 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                          <XAxis dataKey="name" stroke="#64748b" className="text-xs" />
-                          <YAxis stroke="#64748b" className="text-xs" domain={[50, 100]} />
-                          <Tooltip 
-                            contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px', color: '#fff' }}
-                          />
-                          <Legend />
-                          <Bar dataKey="qa_score" name="Human QA Score" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={25} />
-                          <Bar dataKey="ai_score" name="AI Auditor Score" fill="#10b981" radius={[4, 4, 0, 0]} barSize={25} />
-                        </ComposedChart>
                       </ResponsiveContainer>
                     </div>
                   </CardContent>
