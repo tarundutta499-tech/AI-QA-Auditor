@@ -59,7 +59,7 @@ export default async function ReportsPage() {
   const formattedData = (audits || []).map((item, index) => ({
     ...item,
     name: `Call ${index + 1}`,
-    date: new Date(item.created_at).toLocaleDateString(),
+    date: item.created_at ? new Date(item.created_at).toLocaleDateString() : "Unknown",
     compliance_score: item.compliance_percent,
     empathy_score: item.empathy_score || 0,
     agent_name: item.calls?.users?.name || "Unknown"
@@ -112,7 +112,7 @@ export default async function ReportsPage() {
   const coachingData = (coaching || []).map((c: any) => ({
     id: c.id,
     agent_name: c.audits?.calls?.users?.name || "Unknown",
-    date: new Date(c.created_at).toLocaleDateString(),
+    date: c.created_at ? new Date(c.created_at).toLocaleDateString() : "Unknown",
     compliance_before: c.audits?.compliance_percent || 0,
     empathy_before: c.audits?.empathy_score || 0,
     strengths: c.strengths,
@@ -127,7 +127,7 @@ export default async function ReportsPage() {
     ai_score: c.ai_score,
     variance: c.variance,
     agent_name: c.audits?.calls?.users?.name || "Unknown",
-    date: new Date(c.audits?.created_at).toLocaleDateString()
+    date: c.audits?.created_at ? new Date(c.audits.created_at).toLocaleDateString() : "Unknown"
   }))
 
   return (

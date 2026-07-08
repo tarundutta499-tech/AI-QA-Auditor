@@ -29,8 +29,7 @@ import {
   TrendingDown,
   Sparkles,
   CheckCircle,
-  HelpCircle,
-  HelpCircleIcon
+  HelpCircle
 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
