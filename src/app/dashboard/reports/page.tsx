@@ -29,6 +29,33 @@ export default async function ReportsPage() {
 
   const { data: audits } = await query
 
+  // Query Coaching Sessions
+  let coachingQuery = adminClient
+    .from('coaching')
+    .select('*, audits!inner(created_at, compliance_percent, empathy_score, calls!inner(agent_id, company_id, users!inner(name)))')
+    .order('created_at', { ascending: true })
+
+  if (dbUser.role === 'agent') {
+    coachingQuery = coachingQuery.eq('audits.calls.agent_id', user.id)
+  } else {
+    coachingQuery = coachingQuery.eq('audits.calls.company_id', dbUser.company_id)
+  }
+
+  const { data: coaching } = await coachingQuery
+
+  // Query Calibrations
+  let calibrationsQuery = adminClient
+    .from('calibrations')
+    .select('*, audits!inner(created_at, compliance_percent, calls!inner(agent_id, company_id, users!inner(name)))')
+
+  if (dbUser.role === 'agent') {
+    calibrationsQuery = calibrationsQuery.eq('audits.calls.agent_id', user.id)
+  } else {
+    calibrationsQuery = calibrationsQuery.eq('audits.calls.company_id', dbUser.company_id)
+  }
+
+  const { data: calibrations } = await calibrationsQuery
+
   const formattedData = (audits || []).map((item, index) => ({
     ...item,
     name: `Call ${index + 1}`,
@@ -81,11 +108,35 @@ export default async function ReportsPage() {
       }
     })
 
+  // Format Coaching Efficacy
+  const coachingData = (coaching || []).map((c: any) => ({
+    id: c.id,
+    agent_name: c.audits?.calls?.users?.name || "Unknown",
+    date: new Date(c.created_at).toLocaleDateString(),
+    compliance_before: c.audits?.compliance_percent || 0,
+    empathy_before: c.audits?.empathy_score || 0,
+    strengths: c.strengths,
+    improvement_areas: c.improvement_areas,
+    recommended_actions: c.recommended_actions
+  }))
+
+  // Format Calibrations
+  const calibrationData = (calibrations || []).map((c: any) => ({
+    id: c.id,
+    qa_score: c.qa_score,
+    ai_score: c.ai_score,
+    variance: c.variance,
+    agent_name: c.audits?.calls?.users?.name || "Unknown",
+    date: new Date(c.audits?.created_at).toLocaleDateString()
+  }))
+
   return (
     <ReportsCharts 
       data={formattedData} 
       agentData={aggregatedAgentData} 
       paretoData={paretoData}
+      coachingData={coachingData}
+      calibrationData={calibrationData}
       role={dbUser.role} 
     />
   )
