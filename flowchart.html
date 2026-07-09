@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexaviq Vendor Pitch Flowchart</title>
+    <!-- Tailwind CSS for styling the wrapper -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Mermaid CDN for rendering the flowchart -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                background: '#090d16',
+                primaryColor: '#1e293b',
+                primaryTextColor: '#fff',
+                lineColor: '#3b82f6',
+                secondaryColor: '#1e1b4b',
+                tertiaryColor: '#064e3b'
+            }
+        });
+    </script>
+</head>
+<body class="bg-[#020617] text-white min-h-screen flex flex-col items-center justify-center p-8 font-sans">
+
+    <div class="max-w-5xl w-full bg-[#0B1120] border border-gray-800 rounded-3xl p-8 md:p-12 shadow-2xl text-center space-y-6">
+        <div>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-white mb-2 tracking-tight">Nexaviq QA Automation Flowchart</h1>
+            <p class="text-gray-400 text-sm">SOP Compliance, Conversation Intelligence, and Coaching Feedback loop.</p>
+        </div>
+
+        <!-- Rendered Flowchart Wrapper -->
+        <div class="bg-[#020617] p-6 rounded-2xl border border-gray-800/80 flex justify-center overflow-x-auto">
+            <pre class="mermaid text-left">
+graph TD
+    Start([1. Call Ingestion]) --> Ingest{How is the call received?}
+    
+    Ingest -->|A. Auto Integration| Webhook[API / Telephony Webhook<br/>Genesys, Twilio, Amazon Connect]
+    Ingest -->|B. Manual Upload| DragDrop[Portal Batch Drag & Drop<br/>Upload Audio Files / Chat Logs]
+    
+    Webhook --> STT[2. High-Accuracy AI Transcription<br/>English, Hindi & regional dialects]
+    DragDrop --> STT
+    
+    STT --> Grade[3. Automated SOP Compliance Audits<br/>Gemini engine grades 100% of calls against SOPs]
+    
+    Grade --> Dash[4. Portals & Reports]
+    
+    Dash --> Dash1[For QA Managers:<br/>Pareto root-cause, QA alignment, trends]
+    Dash --> Dash2[For Agents:<br/>Actionable feedback & instant coaching notes]
+    
+    Dash1 --> End([Goal: 100% Quality Adherence & Up to 80% Cost Savings])
+    Dash2 --> End
+
+    style Start fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#fff
+    style Ingest fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#fff
+    style Webhook fill:#0f172a,stroke:#3b82f6,stroke-width:2px,color:#fff
+    style DragDrop fill:#0f172a,stroke:#3b82f6,stroke-width:2px,color:#fff
+    style STT fill:#1e1b4b,stroke:#8b5cf6,stroke-width:2px,color:#fff
+    style Grade fill:#1e1b4b,stroke:#8b5cf6,stroke-width:2px,color:#fff
+    style Dash fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#fff
+    style Dash1 fill:#1c1917,stroke:#f59e0b,stroke-width:2px,color:#fff
+    style Dash2 fill:#1c1917,stroke:#f59e0b,stroke-width:2px,color:#fff
+    style End fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#fff
+            </pre>
+        </div>
+
+        <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4 text-xs text-gray-500">
+            <button onclick="window.print()" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-bold shadow-lg shadow-blue-500/20 transition-all">
+                Print or Save to PDF
+            </button>
+            <p>Or right-click the diagram above to save/inspect the SVG vector element.</p>
+        </div>
+    </div>
+
+</body>
+</html>

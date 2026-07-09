@@ -17,7 +17,7 @@ export default function FeaturesPage() {
     },
     {
       title: "100% Interaction Coverage",
-      description: "Stop relying on 2% random sampling. Nexaviq automatically ingests and audits every single call, chat, and email—ensuring nothing is missed.",
+      description: "Stop relying on 2% random sampling. Nexaviq automatically ingests and audits every single customer call—ensuring nothing is missed.",
       icon: Shield,
       align: "right"
     },
@@ -47,7 +47,7 @@ export default function FeaturesPage() {
     },
     {
       title: "Bulk Batch Uploads",
-      description: "Easily drag and drop hundreds of call recordings or chat transcripts at once. Our ingestion engine processes massive batches in parallel.",
+      description: "Easily drag and drop hundreds of call recordings at once. Our ingestion engine processes massive batches in parallel.",
       icon: Database,
       align: "left"
     },

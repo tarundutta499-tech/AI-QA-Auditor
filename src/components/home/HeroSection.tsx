@@ -96,7 +96,7 @@ export default function HeroSection() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-lg md:text-xl text-gray-400 mb-10 leading-relaxed max-w-2xl mx-auto lg:mx-0"
           >
-            Nexaviq uses AI to score every call, chat, and email against your SOPs — in seconds. No sampling. No bias. No missed issues.
+            Nexaviq uses AI to score every customer call against your SOPs — in seconds. No sampling. No bias. No missed issues.
           </motion.p>
 
           <motion.div 

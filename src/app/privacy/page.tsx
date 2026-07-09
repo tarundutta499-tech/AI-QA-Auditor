@@ -28,7 +28,7 @@ export default function PrivacyPage() {
           <h2 className="text-xl font-bold text-white">2. Information We Collect</h2>
           <p className="leading-relaxed font-semibold">a. Customer Interaction Data</p>
           <p className="leading-relaxed">
-            We ingest call audio recordings, metadata (durations, agent IDs, client names), chat histories, or text logs that you upload to execute automated audits. This data is processed securely through encrypted API connections.
+            We ingest call audio recordings and metadata (durations, agent IDs, client names) that you upload to execute automated audits. This data is processed securely through encrypted API connections.
           </p>
           <p className="leading-relaxed font-semibold">b. Personal Data</p>
           <p className="leading-relaxed">

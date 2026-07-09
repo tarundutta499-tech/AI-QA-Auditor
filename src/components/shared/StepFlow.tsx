@@ -12,8 +12,8 @@ export default function StepFlow() {
     },
     {
       icon: Headphones,
-      title: "Connect Interactions",
-      description: "Connect your call recordings or chat transcripts. Or stream interactions automatically via API."
+      title: "Connect Call Audio",
+      description: "Connect your call recordings, or stream call audio automatically via API."
     },
     {
       icon: BarChart,

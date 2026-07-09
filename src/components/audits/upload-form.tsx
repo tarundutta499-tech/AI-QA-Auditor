@@ -155,32 +155,9 @@ export function UploadForm({ scorecards, agents, companyId }: { scorecards: any[
             </Select>
           </div>
 
-          <div className="space-y-4 pt-4">
-            <Label>Audit Source</Label>
-            <Tabs defaultValue="audio" onValueChange={setAuditType} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="audio" className="flex items-center gap-2"><Mic className="w-4 h-4"/> Audio Call</TabsTrigger>
-                <TabsTrigger value="chat" className="flex items-center gap-2"><MessageSquare className="w-4 h-4"/> Text Chat</TabsTrigger>
-              </TabsList>
-              <TabsContent value="audio" className="pt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="audio_file">Audio Recording (MP3, WAV, M4A)</Label>
-                  <Input id="audio_file" name="audio_file" type="file" accept="audio/*" required={auditType === 'audio'} className="cursor-pointer" />
-                </div>
-              </TabsContent>
-              <TabsContent value="chat" className="pt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="chat_transcript">Chat Transcript</Label>
-                  <Textarea 
-                    id="chat_transcript" 
-                    name="chat_transcript" 
-                    placeholder="Paste the raw text of the chat or email thread here..." 
-                    required={auditType === 'chat'} 
-                    className="min-h-[200px]"
-                  />
-                </div>
-              </TabsContent>
-            </Tabs>
+          <div className="space-y-2 pt-4">
+            <Label htmlFor="audio_file">Audio Recording (MP3, WAV, M4A)</Label>
+            <Input id="audio_file" name="audio_file" type="file" accept="audio/*" required className="cursor-pointer" />
           </div>
         </CardContent>
       </Card>
@@ -188,7 +165,7 @@ export function UploadForm({ scorecards, agents, companyId }: { scorecards: any[
       <div className="flex justify-end gap-4">
         <Button variant="outline" type="button" onClick={() => router.back()} disabled={isUploading}>Cancel</Button>
         <Button type="submit" disabled={isUploading}>
-          {isUploading ? progressText : (auditType === 'audio' ? 'Upload & Audit Call' : 'Audit Chat Transcript')}
+          {isUploading ? progressText : 'Upload & Audit Call'}
         </Button>
       </div>
     </form>
