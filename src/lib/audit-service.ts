@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai'
+import { sendEscalationEmail } from './email-service'
 
 export interface ProcessAuditOptions {
   supabase: any
@@ -32,7 +33,7 @@ export async function processAudit({
 
   // 2. Fetch Company Knowledge (RAG)
   // We need to fetch the company ID first if it's not provided, but agentId is tied to company_id
-  const { data: agent } = await supabase.from('users').select('company_id').eq('id', agentId).single()
+  const { data: agent } = await supabase.from('users').select('company_id, name').eq('id', agentId).single()
   let knowledgeContext = ''
 
   if (agent?.company_id) {
@@ -113,7 +114,9 @@ Return the result STRICTLY as a JSON object with this exact structure:
     "recommended_actions": "String"
   },
   "overall_compliance_percent": 100,
-  "empathy_score": 100
+  "empathy_score": 100,
+  "inappropriate_behavior_detected": true,
+  "inappropriate_behavior_details": "Explain specifically if the agent was rude, sarcastic, abusive, or acted inappropriately. Provide the exact transcript snippet. Null if none."
 }
 `
 
@@ -183,6 +186,17 @@ Return the result STRICTLY as a JSON object with this exact structure:
       improvement_areas: analysis.coaching.improvement_areas,
       recommended_actions: analysis.coaching.recommended_actions
     })
+
+    // Send Escalation Alert Email if AI flags inappropriate behavior
+    if (analysis.inappropriate_behavior_detected && agent?.company_id) {
+      await sendEscalationEmail({
+        supabase,
+        companyId: agent.company_id,
+        agentName: agent.name || 'Unknown Agent',
+        callId,
+        violationDetails: analysis.inappropriate_behavior_details || 'Abusive or inappropriate agent behavior detected.'
+      })
+    }
   }
 
   return { success: true, audit_id: audit?.id }
