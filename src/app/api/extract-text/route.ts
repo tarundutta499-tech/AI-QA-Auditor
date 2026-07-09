@@ -46,7 +46,10 @@ Do not add any commentary. Just return the pure text content of the document.
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: [geminiFile, prompt]
+      contents: [
+        { fileData: { fileUri: geminiFile.uri, mimeType: geminiFile.mimeType } },
+        prompt
+      ]
     })
 
     const text = response.text
