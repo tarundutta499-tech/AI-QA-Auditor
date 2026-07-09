@@ -15,6 +15,7 @@ export function Sidebar({ role = 'agent' }: { role?: string }) {
     { label: 'Upload Audit', href: '/dashboard/audits/new', icon: Upload },
     { label: 'Audit History', href: '/dashboard/audits', icon: FileText },
     { label: 'Analytics & Reports', href: '/dashboard/reports', icon: BarChart3 },
+    { label: 'Agent Co-Pilot (Live)', href: '/dashboard/agent-assist', icon: Activity },
     { label: 'Scorecards', href: '/dashboard/scorecards', icon: ListChecks },
     { label: 'Knowledge Base', href: '/dashboard/knowledge', icon: BookOpen },
     { label: 'Team Members', href: '/dashboard/agents', icon: Users },
@@ -27,6 +28,7 @@ export function Sidebar({ role = 'agent' }: { role?: string }) {
       { label: 'My Dashboard', href: '/dashboard', icon: Home },
       { label: 'My Audits', href: '/dashboard/audits', icon: ListChecks },
       { label: 'My Scores', href: '/dashboard/reports', icon: BarChart3 },
+      { label: 'Agent Co-Pilot (Live)', href: '/dashboard/agent-assist', icon: Activity },
       { label: 'Knowledge Base', href: '/dashboard/knowledge', icon: BookOpen },
     ]
   }
