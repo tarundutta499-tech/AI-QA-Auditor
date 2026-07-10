@@ -108,6 +108,7 @@ export default function AgentAssistPage() {
   // Database Scorecards list
   const [scorecards, setScorecards] = useState<any[]>([])
   const [selectedScorecardId, setSelectedScorecardId] = useState<string>('default')
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   // Interactive Checklist State
   const [checklist, setChecklist] = useState<ChecklistItem[]>(DEFAULT_CHECKLIST)
@@ -122,6 +123,8 @@ export default function AgentAssistPage() {
       const res = await getLiveScorecards()
       if (res.success && res.scorecards) {
         setScorecards(res.scorecards)
+      } else {
+        setLoadError(res.error || 'Failed to load scorecards.')
       }
     }
     loadScorecards()
@@ -130,6 +133,7 @@ export default function AgentAssistPage() {
   // Handle Dropdown Scorecard Selection
   const handleScorecardChange = async (scorecardId: string) => {
     setSelectedScorecardId(scorecardId)
+    setLoadError(null)
     resetAll()
 
     if (scorecardId === 'default') {
@@ -152,6 +156,9 @@ export default function AgentAssistPage() {
       setChecklist(mappedChecklist)
     } else {
       setChecklist([])
+      if (!res.success) {
+        setLoadError(res.error || 'Failed to load parameters.')
+      }
     }
   }
 
@@ -331,6 +338,11 @@ export default function AgentAssistPage() {
           <p className="text-slate-600 text-sm">
             Live speech transcription monitor, instant compliance checklists, and supervisor behavioral escalations.
           </p>
+          {loadError && (
+            <p className="text-red-600 text-xs mt-1.5 font-bold bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-lg flex items-center gap-1.5 max-w-lg">
+              <AlertTriangle className="w-3.5 h-3.5" /> Database Sync Warning: {loadError}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-3 items-center">
