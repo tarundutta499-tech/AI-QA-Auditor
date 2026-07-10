@@ -46,7 +46,6 @@ export async function getLiveScorecardParameters(scorecardId: string) {
       .from('scorecard_parameters')
       .select('*')
       .eq('scorecard_id', scorecardId)
-      .order('id', { ascending: true })
 
     if (error) throw error
     return { success: true, parameters: data || [] }
