@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { createBrowserClient } from '@supabase/ssr'
 
 interface ChecklistItem {
   id: string
@@ -27,6 +28,73 @@ interface ChecklistItem {
   passed: boolean
   triggerPrompt: string
 }
+
+// Utility to generate smart keywords and scripts for custom parameters
+function generateKeywordsAndPrompt(name: string): { keywords: string[], triggerPrompt: string } {
+  const stopWords = new Set(['and', 'or', 'the', 'a', 'of', 'to', 'is', 'for', 'in', 'on', 'at', 'by', 'with', 'from', 'about', 'as', 'our', 'your', 'my', 'their', 'its'])
+  const words = name.toLowerCase()
+    .replace(/[^\w\s]/g, '')
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !stopWords.has(w))
+
+  const lowerName = name.toLowerCase()
+  const keywordsSet = new Set(words)
+  let triggerPrompt = `Guide: Ensure you cover parameter: "${name}"`
+
+  if (lowerName.includes('greet') || lowerName.includes('open')) {
+    ['hello', 'welcome', 'thank you for calling', 'calling'].forEach(k => keywordsSet.add(k))
+    triggerPrompt = "Say: 'Hello, thank you for calling Nexaviq Support. My name is [Your Name].'"
+  } else if (lowerName.includes('verify') || lowerName.includes('auth') || lowerName.includes('ident')) {
+    ['confirm', 'name', 'account', 'verify', 'details', 'email'].forEach(k => keywordsSet.add(k))
+    triggerPrompt = "Say: 'To verify your identity, could you please confirm your registered account name?'"
+  } else if (lowerName.includes('disclos') || lowerName.includes('record')) {
+    ['recorded', 'quality', 'monitor', 'privacy', 'compliance'].forEach(k => keywordsSet.add(k))
+    triggerPrompt = "Say: 'Please note that this call is recorded for quality monitoring purposes.'"
+  } else if (lowerName.includes('assist') || lowerName.includes('help')) {
+    ['anything else', 'further help', 'assist', 'assistance'].forEach(k => keywordsSet.add(k))
+    triggerPrompt = "Say: 'Is there anything else I can assist you with today?'"
+  } else if (lowerName.includes('close') || lowerName.includes('thank')) {
+    ['bye', 'good day', 'thank you', 'thanks'].forEach(k => keywordsSet.add(k))
+    triggerPrompt = "Say: 'Thank you for choosing us, have a wonderful day! Goodbye.'"
+  }
+
+  return {
+    keywords: Array.from(keywordsSet),
+    triggerPrompt
+  }
+}
+
+// Default standard BPO items
+const DEFAULT_CHECKLIST: ChecklistItem[] = [
+  { 
+    id: 'greeting', 
+    label: 'Standard Opening Greeting', 
+    keywords: ['hello', 'welcome', 'thank you for calling', 'name is'], 
+    passed: false,
+    triggerPrompt: "Say: 'Hello, thank you for calling Nexaviq Support. My name is [Your Name].'" 
+  },
+  { 
+    id: 'auth', 
+    label: 'Customer Identification & Authentication', 
+    keywords: ['verify', 'name', 'account', 'identity', 'details'], 
+    passed: false,
+    triggerPrompt: "Say: 'To secure your account, could you please verify your registered email?'"
+  },
+  { 
+    id: 'disclosure', 
+    label: 'Security & Call Recording Disclosure', 
+    keywords: ['recorded', 'monitor', 'privacy', 'recorded for quality'], 
+    passed: false,
+    triggerPrompt: "Say: 'Please note that this call is recorded for quality monitoring purposes.'"
+  },
+  { 
+    id: 'assistance', 
+    label: 'Offer Further Assistance', 
+    keywords: ['anything else', 'further help', 'assist you', 'assistance'], 
+    passed: false,
+    triggerPrompt: "Say: 'Is there anything else I can assist you with today?'"
+  }
+]
 
 export default function AgentAssistPage() {
   const [isRecording, setIsRecording] = useState(false)
@@ -37,41 +105,77 @@ export default function AgentAssistPage() {
   const [warning, setWarning] = useState<string | null>(null)
   const [callDuration, setCallDuration] = useState(0)
 
+  // Database Scorecards list
+  const [scorecards, setScorecards] = useState<any[]>([])
+  const [selectedScorecardId, setSelectedScorecardId] = useState<string>('default')
+
   // Interactive Checklist State
-  const [checklist, setChecklist] = useState<ChecklistItem[]>([
-    { 
-      id: 'greeting', 
-      label: 'Standard Opening Greeting', 
-      keywords: ['hello', 'welcome', 'thank you for calling', 'name is'], 
-      passed: false,
-      triggerPrompt: "Say: 'Hello, thank you for calling Nexaviq Support. My name is [Your Name].'" 
-    },
-    { 
-      id: 'auth', 
-      label: 'Customer Identification & Authentication', 
-      keywords: ['verify', 'name', 'account', 'identity', 'details'], 
-      passed: false,
-      triggerPrompt: "Say: 'To secure your account, could you please verify your registered email?'"
-    },
-    { 
-      id: 'disclosure', 
-      label: 'Security & Call Recording Disclosure', 
-      keywords: ['recorded', 'monitor', 'privacy', 'recorded for quality'], 
-      passed: false,
-      triggerPrompt: "Say: 'Please note that this call is recorded for quality monitoring purposes.'"
-    },
-    { 
-      id: 'assistance', 
-      label: 'Offer Further Assistance', 
-      keywords: ['anything else', 'further help', 'assist you', 'assistance'], 
-      passed: false,
-      triggerPrompt: "Say: 'Is there anything else I can assist you with today?'"
-    }
-  ])
+  const [checklist, setChecklist] = useState<ChecklistItem[]>(DEFAULT_CHECKLIST)
 
   const recognitionRef = useRef<any>(null)
   const timerRef = useRef<any>(null)
   const simulationIntervalRef = useRef<any>(null)
+
+  // Load Scorecards from Supabase
+  useEffect(() => {
+    async function loadScorecards() {
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: dbUser } = await supabase.from('users').select('company_id').eq('id', user.id).single()
+        if (dbUser?.company_id) {
+          const { data } = await supabase
+            .from('scorecards')
+            .select('*')
+            .eq('company_id', dbUser.company_id)
+            .order('name', { ascending: true })
+          if (data) setScorecards(data)
+        }
+      }
+    }
+    loadScorecards()
+  }, [])
+
+  // Handle Dropdown Scorecard Selection
+  const handleScorecardChange = async (scorecardId: string) => {
+    setSelectedScorecardId(scorecardId)
+    resetAll()
+
+    if (scorecardId === 'default') {
+      setChecklist(DEFAULT_CHECKLIST)
+      return
+    }
+
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+    
+    const { data: params } = await supabase
+      .from('scorecard_parameters')
+      .select('*')
+      .eq('scorecard_id', scorecardId)
+      .order('id', { ascending: true })
+
+    if (params && params.length > 0) {
+      const mappedChecklist: ChecklistItem[] = params.map((p: any) => {
+        const { keywords, triggerPrompt } = generateKeywordsAndPrompt(p.name)
+        return {
+          id: p.id,
+          label: p.name,
+          keywords,
+          passed: false,
+          triggerPrompt
+        }
+      })
+      setChecklist(mappedChecklist)
+    } else {
+      setChecklist([])
+    }
+  }
 
   // 1. Web Speech API Setup for Microphone
   useEffect(() => {
@@ -251,7 +355,19 @@ export default function AgentAssistPage() {
           </p>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3 items-center">
+          <select 
+            value={selectedScorecardId}
+            onChange={(e) => handleScorecardChange(e.target.value)}
+            className="bg-[#0B1120] text-gray-300 border border-gray-800 rounded-full h-11 px-4 text-sm focus:outline-none focus:border-blue-500 cursor-pointer hover:bg-white/5"
+            disabled={isRecording || isSimulating}
+          >
+            <option value="default">Default BPO Scorecard</option>
+            {scorecards.map((s: any) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+
           <Button 
             onClick={toggleRecording} 
             className={`rounded-full h-11 px-5 font-semibold transition-all ${
