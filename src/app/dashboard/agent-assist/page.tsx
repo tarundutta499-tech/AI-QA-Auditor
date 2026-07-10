@@ -393,8 +393,8 @@ export default function AgentAssistPage() {
                 <Sparkles className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h4 className="font-bold text-white text-sm">Nexaviq Live Co-Pilot Suggestion</h4>
-                <p className="text-gray-300 text-sm leading-relaxed">
+                <h4 className="font-extrabold text-black text-sm">Nexaviq Live Co-Pilot Suggestion</h4>
+                <p className="text-black font-bold text-sm leading-relaxed">
                   {nextTarget ? nextTarget.triggerPrompt : "All compliance checkpoints passed! Ensure proper call wrap-up."}
                 </p>
               </div>
