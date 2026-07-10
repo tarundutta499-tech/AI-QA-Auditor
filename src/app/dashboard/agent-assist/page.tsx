@@ -19,7 +19,7 @@ import {
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { createBrowserClient } from '@supabase/ssr'
+import { getLiveScorecards, getLiveScorecardParameters } from './actions'
 
 interface ChecklistItem {
   id: string
@@ -119,21 +119,9 @@ export default function AgentAssistPage() {
   // Load Scorecards from Supabase
   useEffect(() => {
     async function loadScorecards() {
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: dbUser } = await supabase.from('users').select('company_id').eq('id', user.id).single()
-        if (dbUser?.company_id) {
-          const { data } = await supabase
-            .from('scorecards')
-            .select('*')
-            .eq('company_id', dbUser.company_id)
-            .order('name', { ascending: true })
-          if (data) setScorecards(data)
-        }
+      const res = await getLiveScorecards()
+      if (res.success && res.scorecards) {
+        setScorecards(res.scorecards)
       }
     }
     loadScorecards()
@@ -149,19 +137,9 @@ export default function AgentAssistPage() {
       return
     }
 
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-    
-    const { data: params } = await supabase
-      .from('scorecard_parameters')
-      .select('*')
-      .eq('scorecard_id', scorecardId)
-      .order('id', { ascending: true })
-
-    if (params && params.length > 0) {
-      const mappedChecklist: ChecklistItem[] = params.map((p: any) => {
+    const res = await getLiveScorecardParameters(scorecardId)
+    if (res.success && res.parameters && res.parameters.length > 0) {
+      const mappedChecklist: ChecklistItem[] = res.parameters.map((p: any) => {
         const { keywords, triggerPrompt } = generateKeywordsAndPrompt(p.name)
         return {
           id: p.id,
