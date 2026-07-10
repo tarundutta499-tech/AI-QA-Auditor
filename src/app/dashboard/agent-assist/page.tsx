@@ -242,11 +242,11 @@ export default function AgentAssistPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-800 pb-6">
         <div>
-          <h1 className="text-3xl font-bold mb-2 tracking-tight text-white flex items-center gap-2">
+          <h1 className="text-3xl font-bold mb-2 tracking-tight text-black flex items-center gap-2">
             <Sparkles className="h-6 w-6 text-blue-500 animate-pulse" />
             Agent Co-Pilot (Real-Time Assist)
           </h1>
-          <p className="text-gray-400 text-sm">
+          <p className="text-slate-600 text-sm">
             Live speech transcription monitor, instant compliance checklists, and supervisor behavioral escalations.
           </p>
         </div>
