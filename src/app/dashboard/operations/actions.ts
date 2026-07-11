@@ -39,7 +39,7 @@ export async function getLiveOperationsData() {
       .from('audits')
       .select(`
         id,
-        summary,
+        overall_score,
         created_at,
         calls (
           id,
@@ -75,7 +75,8 @@ export async function getLiveOperationsData() {
     // Map audits to sync logs
     const mappedLogs = companyAudits.map((a: any) => {
       const agentName = a.calls?.users?.name || "Agent"
-      const cleanSummary = a.summary || "Call audited successfully. Compliance checks completed."
+      const score = a.overall_score || 0
+      const cleanSummary = `Call compliance audit completed successfully. Agent compliance score: ${score}%. CRM wrap-up logged.`
       return {
         id: a.id,
         time: new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
