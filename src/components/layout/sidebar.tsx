@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, BarChart3, Settings, LogOut, ListChecks, FileText, Activity, Upload, BookOpen, AlertTriangle, Scale, CreditCard } from 'lucide-react'
+import { Home, Users, BarChart3, Settings, LogOut, ListChecks, FileText, Activity, Upload, BookOpen, AlertTriangle, Scale, CreditCard, Workflow } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { signout } from '@/app/login/actions'
 import { cn } from '@/lib/utils'
@@ -16,6 +16,7 @@ export function Sidebar({ role = 'agent' }: { role?: string }) {
     { label: 'Audit History', href: '/dashboard/audits', icon: FileText },
     { label: 'Analytics & Reports', href: '/dashboard/reports', icon: BarChart3 },
     { label: 'Agent Co-Pilot (Live)', href: '/dashboard/agent-assist', icon: Activity },
+    { label: 'Operations & ACW', href: '/dashboard/operations', icon: Workflow },
     { label: 'Scorecards', href: '/dashboard/scorecards', icon: ListChecks },
     { label: 'Knowledge Base', href: '/dashboard/knowledge', icon: BookOpen },
     { label: 'Team Members', href: '/dashboard/agents', icon: Users },
