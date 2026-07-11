@@ -2,7 +2,7 @@
 
 import Navbar from "@/components/layout/Navbar"
 import Footer from "@/components/layout/Footer"
-import { Shield, FileUp, Zap, HeartPulse, AlertOctagon, LineChart, Database, Code, Globe } from "lucide-react"
+import { Shield, FileUp, Zap, HeartPulse, AlertOctagon, LineChart, Database, Code, Globe, Sparkles, Layers } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { motion } from "framer-motion"
@@ -61,6 +61,18 @@ export default function FeaturesPage() {
       title: "Multi-Language Support",
       description: "Auditing global or diverse teams? Nexaviq natively understands and audits interactions in Hindi, English, and regional languages.",
       icon: Globe,
+      align: "left"
+    },
+    {
+      title: "Real-Time Agent Co-Pilot",
+      description: "Equip your agents with a lightweight Chrome Extension that listens live and ticks off compliance checklists on their screens as they speak.",
+      icon: Sparkles,
+      align: "right"
+    },
+    {
+      title: "CRM Auto-Logging (Zero ACW)",
+      description: "Eliminate manual after-call wrap-up work. Nexaviq instantly drafts call summaries and disposition codes and pushes them directly to Salesforce or Zendesk.",
+      icon: Layers,
       align: "left"
     }
   ]
