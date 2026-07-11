@@ -40,6 +40,8 @@ export default function OperationsDashboard() {
     totalAudits: 0
   })
   const [syncLogs, setSyncLogs] = useState<any[]>([])
+  const [leakageCategories, setLeakageCategories] = useState<any[]>([])
+  const [topFailedParamName, setTopFailedParamName] = useState<string>("")
   const [loadError, setLoadError] = useState<string | null>(null)
 
   const loadData = async () => {
@@ -47,6 +49,8 @@ export default function OperationsDashboard() {
     if (res.success && res.metrics && res.logs) {
       setMetrics(res.metrics)
       setSyncLogs(res.logs)
+      setLeakageCategories(res.leakageCategories || [])
+      setTopFailedParamName(res.topFailedParamName || "")
     } else if (!res.success) {
       setLoadError(res.error || "Failed to load data")
     }
@@ -69,14 +73,6 @@ export default function OperationsDashboard() {
     { day: "Wed", totalAht: 252, talkTime: 170, holdTime: 52, deadAir: 30 },
     { day: "Thu", totalAht: 248, talkTime: 168, holdTime: 50, deadAir: 30 },
     { day: "Fri", totalAht: 242, talkTime: 165, holdTime: 48, deadAir: 29 }
-  ]
-
-  // FCR repeat category data
-  const fcrLeakageData = [
-    { category: "System Outage", count: 48, cost: "$1,440" },
-    { category: "Agent Instructions", count: 32, cost: "$960" },
-    { category: "Routing Error", count: 18, cost: "$540" },
-    { category: "Tool Access Blocked", count: 12, cost: "$360" }
   ]
 
   return (
@@ -238,34 +234,42 @@ export default function OperationsDashboard() {
               <CardDescription>Firms losing operational capacity to repeat callers</CardDescription>
             </CardHeader>
             <CardContent className="pt-6 space-y-6">
-              
-              <div className="p-4 bg-red-500/10 border-2 border-red-500/20 rounded-2xl flex items-start gap-3 text-red-200">
-                <ShieldAlert className="w-5 h-5 text-red-500 shrink-0 mt-0.5 animate-pulse" />
-                <div className="space-y-1">
-                  <h4 className="font-bold text-sm text-white">Repeat Call Alert</h4>
-                  <p className="text-xs text-red-300/80 leading-relaxed">
-                    SOP parameters show that incomplete agent instructions on **Stripe Refunds** is driving a 15% increase in repeat callers this week.
-                  </p>
+              {leakageCategories.length === 0 ? (
+                <div className="text-center py-12 text-gray-500 border border-dashed border-gray-800 rounded-xl space-y-3">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
+                  <p className="text-sm font-semibold text-white">0% FCR Leakage Detected</p>
+                  <p className="text-xs text-gray-600 max-w-sm mx-auto">All audited calls match your active compliance rubrics perfectly. No repeats triggered by SOP failures.</p>
                 </div>
-              </div>
-
-              <div className="space-y-4">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500">Leakage Categories</h4>
-                
-                {fcrLeakageData.map((item, i) => (
-                  <div key={i} className="p-3 bg-[#020617]/50 rounded-xl border border-gray-800/80 flex items-center justify-between">
-                    <div>
-                      <span className="text-sm font-semibold text-white">{item.category}</span>
-                      <p className="text-xs text-gray-500">Instances: {item.count} repeat calls</p>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs font-bold text-red-400 uppercase">Estimated Loss</span>
-                      <p className="text-sm font-bold text-white font-mono">{item.cost}</p>
+              ) : (
+                <>
+                  <div className="p-4 bg-red-500/10 border-2 border-red-500/20 rounded-2xl flex items-start gap-3 text-red-200">
+                    <ShieldAlert className="w-5 h-5 text-red-500 shrink-0 mt-0.5 animate-pulse" />
+                    <div className="space-y-1">
+                      <h4 className="font-bold text-sm text-white">Repeat Call Alert</h4>
+                      <p className="text-xs text-red-300/80 leading-relaxed">
+                        SOP parameters show that failure to follow criteria on **{topFailedParamName}** is driving the highest volume of repeat customer callbacks.
+                      </p>
                     </div>
                   </div>
-                ))}
-              </div>
 
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500">Leakage Categories</h4>
+                    
+                    {leakageCategories.map((item, i) => (
+                      <div key={i} className="p-3 bg-[#020617]/50 rounded-xl border border-gray-800/80 flex items-center justify-between">
+                        <div>
+                          <span className="text-sm font-semibold text-white">{item.category}</span>
+                          <p className="text-xs text-gray-500">Instances: {item.count} repeat calls</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs font-bold text-red-400 uppercase">Estimated Loss</span>
+                          <p className="text-sm font-bold text-white font-mono">{item.cost}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 

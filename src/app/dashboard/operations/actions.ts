@@ -89,6 +89,45 @@ export async function getLiveOperationsData() {
       }
     })
 
+    // Fetch real FCR parameter failures
+    const auditIds = companyAudits.map((a: any) => a.id)
+    let leakageCategories: any[] = []
+    let topFailedParamName = ""
+
+    if (auditIds.length > 0) {
+      const { data: results, error: resultsError } = await adminClient
+        .from('audit_results')
+        .select(`
+          id,
+          is_passed,
+          scorecard_parameters (
+            name
+          )
+        `)
+        .in('audit_id', auditIds)
+        .eq('is_passed', false)
+
+      if (!resultsError && results) {
+        const countsMap: { [key: string]: number } = {}
+        results.forEach((r: any) => {
+          const paramName = r.scorecard_parameters?.name
+          if (paramName) {
+            countsMap[paramName] = (countsMap[paramName] || 0) + 1
+          }
+        })
+
+        leakageCategories = Object.entries(countsMap).map(([category, count]) => ({
+          category,
+          count,
+          cost: `$${count * 30}`
+        })).sort((a, b) => b.count - a.count)
+
+        if (leakageCategories.length > 0) {
+          topFailedParamName = leakageCategories[0].category
+        }
+      }
+    }
+
     return {
       success: true,
       metrics: {
@@ -97,7 +136,9 @@ export async function getLiveOperationsData() {
         totalCalls,
         totalAudits
       },
-      logs: mappedLogs.slice(0, 5) // Return last 5 logs
+      logs: mappedLogs.slice(0, 5),
+      leakageCategories,
+      topFailedParamName
     }
   } catch (error: any) {
     console.error("Failed to load operations metrics:", error)
