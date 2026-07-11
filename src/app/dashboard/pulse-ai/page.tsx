@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
   Sparkles, 
@@ -12,12 +12,18 @@ import {
   Clock, 
   ShieldAlert, 
   AlertTriangle,
-  FileText
+  FileText,
+  Mic,
+  MicOff,
+  Copy,
+  Check,
+  ArrowUpRight
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { askPulseAI } from "./actions"
+import Link from "next/link"
 
 interface Message {
   id: string
@@ -29,6 +35,10 @@ interface Message {
 export default function PulseAIPage() {
   const [query, setQuery] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const recognitionRef = useRef<any>(null)
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -37,6 +47,56 @@ export default function PulseAIPage() {
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     }
   ])
+
+  // Setup Web Speech API for voice search
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+      if (SpeechRecognition) {
+        const rec = new SpeechRecognition()
+        rec.continuous = false
+        rec.interimResults = false
+        rec.lang = 'en-US'
+
+        rec.onresult = (event: any) => {
+          const speechToText = event.results[0][0].transcript
+          setQuery(prev => (prev ? prev + " " + speechToText : speechToText))
+          setIsRecording(false)
+        }
+
+        rec.onerror = (e: any) => {
+          console.error("Speech Recognition Error:", e)
+          setIsRecording(false)
+        }
+
+        rec.onend = () => {
+          setIsRecording(false)
+        }
+
+        recognitionRef.current = rec
+      }
+    }
+  }, [])
+
+  const toggleVoiceInput = () => {
+    if (!recognitionRef.current) {
+      alert("Speech recognition is not supported in this browser.")
+      return
+    }
+
+    if (isRecording) {
+      recognitionRef.current.stop()
+    } else {
+      setIsRecording(true)
+      recognitionRef.current.start()
+    }
+  }
+
+  const handleCopy = (id: string, text: string) => {
+    navigator.clipboard.writeText(text)
+    setCopiedId(id)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
 
   const suggestedQueries = [
     { label: "Why is call handling time high?", query: "Why is our Average Handle Time (AHT) high? What are the main causes?" },
@@ -164,22 +224,57 @@ export default function PulseAIPage() {
                     {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                   </div>
 
-                  <div className={`p-4 rounded-2xl text-sm leading-relaxed ${
+                  <div className={`p-4 rounded-2xl text-sm leading-relaxed relative group ${
                     msg.role === 'user'
                       ? 'bg-blue-600 text-white rounded-tr-sm'
                       : 'bg-slate-900/50 text-gray-300 rounded-tl-sm border border-gray-800'
                   }`}>
-                    {/* Simplified markdown formatter for strong/bold text */}
+                    {/* Simplified markdown formatter for strong/bold text & interactive Citations */}
                     {msg.text.split("\n").map((line, lIdx) => {
-                      // Format bold markdown
                       const parts = line.split("**")
                       return (
                         <p key={lIdx} className="mb-2 last:mb-0">
-                          {parts.map((part, pIdx) => pIdx % 2 === 1 ? <strong key={pIdx} className="text-white font-bold">{part}</strong> : part)}
+                          {parts.map((part, pIdx) => {
+                            if (pIdx % 2 === 1) {
+                              return <strong key={pIdx} className="text-white font-bold">{part}</strong>
+                            }
+                            
+                            // Check for "Call #[ID]" citation structures
+                            const callMatch = part.match(/(Call\s*#([a-zA-Z0-9-]+))/i)
+                            if (callMatch) {
+                              const matchText = callMatch[1]
+                              const id = callMatch[2]
+                              const segmentSplit = part.split(callMatch[0])
+                              return (
+                                <span key={pIdx}>
+                                  {segmentSplit[0]}
+                                  <Link 
+                                    href={`/dashboard/audits/${id}`}
+                                    className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded bg-blue-950 text-blue-400 hover:bg-blue-900 border border-blue-800/80 text-xs font-bold font-mono transition-all ml-1"
+                                  >
+                                    {matchText} <ArrowUpRight className="w-3 h-3" />
+                                  </Link>
+                                  {segmentSplit[1]}
+                                </span>
+                              )
+                            }
+                            return part
+                          })}
                         </p>
                       )
                     })}
-                    <span className="text-[10px] text-gray-500 block mt-2 text-right">{msg.timestamp}</span>
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-800/40">
+                      <span className="text-[10px] text-gray-500">{msg.timestamp}</span>
+                      {msg.role === 'assistant' && (
+                        <button 
+                          onClick={() => handleCopy(msg.id, msg.text)}
+                          className="opacity-0 group-hover:opacity-100 transition-all p-1 text-gray-500 hover:text-gray-300 rounded"
+                          title="Copy to clipboard"
+                        >
+                          {copiedId === msg.id ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               ))}
@@ -209,13 +304,27 @@ export default function PulseAIPage() {
               }}
               className="flex gap-2"
             >
+              <Button
+                type="button"
+                onClick={toggleVoiceInput}
+                className={`rounded-xl h-12 w-12 p-0 flex items-center justify-center shrink-0 border ${
+                  isRecording 
+                    ? 'bg-red-600 border-red-500 text-white animate-pulse' 
+                    : 'bg-[#020617] border-gray-800 text-gray-400 hover:bg-white/5'
+                }`}
+                title={isRecording ? "Listening..." : "Voice Search"}
+              >
+                {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </Button>
+
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Ask Pulse AI about your operational performance..."
+                placeholder={isRecording ? "Listening... Speak your query..." : "Ask Pulse AI about your operational performance..."}
                 disabled={isLoading}
                 className="bg-[#020617] border-gray-800 rounded-xl h-12 text-sm focus-visible:ring-blue-500 text-white placeholder-gray-500"
               />
+
               <Button
                 type="submit"
                 disabled={isLoading || !query.trim()}
