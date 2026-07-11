@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { 
   BarChart, 
@@ -29,34 +29,37 @@ import {
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { getLiveOperationsData } from "./actions"
 
 export default function OperationsDashboard() {
   const [isSyncing, setIsSyncing] = useState(false)
-  const [syncLogs, setSyncLogs] = useState([
-    { id: "1", time: "Just now", agent: "John Doe", callId: "c-897", summary: "Customer requested a billing refund for double charge. Refund processed via Stripe API.", disposition: "Billing - Refund", status: "synced", crm: "Salesforce" },
-    { id: "2", time: "4 mins ago", agent: "Sarah Jenkins", callId: "c-896", summary: "Account lockout. Guided customer to reset password using two-factor link.", disposition: "Account - Lockout", status: "synced", crm: "Zendesk" },
-    { id: "3", time: "12 mins ago", agent: "Michael Chang", callId: "c-895", summary: "General pricing inquiry. Explained enterprise tiers and email threshold features.", disposition: "Sales - Inquiry", status: "synced", crm: "Salesforce" }
-  ])
+  const [metrics, setMetrics] = useState({
+    acwSavedMins: 0,
+    ahtText: "0m 00s",
+    totalCalls: 0,
+    totalAudits: 0
+  })
+  const [syncLogs, setSyncLogs] = useState<any[]>([])
+  const [loadError, setLoadError] = useState<string | null>(null)
 
-  const triggerSync = () => {
+  const loadData = async () => {
+    const res = await getLiveOperationsData()
+    if (res.success && res.metrics && res.logs) {
+      setMetrics(res.metrics)
+      setSyncLogs(res.logs)
+    } else if (!res.success) {
+      setLoadError(res.error || "Failed to load data")
+    }
+  }
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const triggerSync = async () => {
     setIsSyncing(true)
-    setTimeout(() => {
-      setIsSyncing(false)
-      // add a mock synced log
-      setSyncLogs(prev => [
-        {
-          id: Date.now().toString(),
-          time: "Just now",
-          agent: "Priya Sharma",
-          callId: `c-${Math.floor(Math.random() * 100) + 900}`,
-          summary: "Agent resolved customer routing query. Validated SOP compliance during transfer.",
-          disposition: "Routing - Escalation",
-          status: "synced",
-          crm: "Salesforce"
-        },
-        ...prev
-      ])
-    }, 1500)
+    await loadData()
+    setIsSyncing(false)
   }
 
   // AHT daily chart data
@@ -89,6 +92,9 @@ export default function OperationsDashboard() {
           <p className="text-gray-400 text-sm">
             Optimize Average Handle Time (AHT), track First Call Resolution (FCR) leakage, and manage automated CRM wrap-up logs.
           </p>
+          {loadError && (
+            <p className="text-red-500 text-xs mt-1.5 font-bold">Database Error: {loadError}</p>
+          )}
         </div>
         <Button 
           onClick={triggerSync} 
@@ -96,7 +102,7 @@ export default function OperationsDashboard() {
           className="rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold h-11 px-6 shadow-lg shadow-emerald-500/10"
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
-          {isSyncing ? "Syncing Logs..." : "Force Sync CRM Queue"}
+          {isSyncing ? "Syncing Logs..." : "Sync CRM Queue"}
         </Button>
       </div>
 
@@ -109,7 +115,7 @@ export default function OperationsDashboard() {
               <span className="text-gray-400 text-sm font-semibold">Total ACW Saved</span>
               <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg"><TrendingDown className="w-4 h-4" /></div>
             </div>
-            <div className="text-3xl font-bold text-white">14,820 <span className="text-xs text-gray-400 font-normal">mins</span></div>
+            <div className="text-3xl font-bold text-white">{metrics.acwSavedMins} <span className="text-xs text-gray-400 font-normal">mins</span></div>
             <p className="text-xs text-emerald-400 flex items-center gap-1">
               <ArrowDownRight className="w-3.5 h-3.5" /> Zero After-Call Work (ACW) applied site-wide
             </p>
@@ -123,7 +129,7 @@ export default function OperationsDashboard() {
               <span className="text-gray-400 text-sm font-semibold">Average Handle Time (AHT)</span>
               <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg"><Clock className="w-4 h-4" /></div>
             </div>
-            <div className="text-3xl font-bold text-white">4m 02s <span className="text-xs text-gray-400 font-normal">avg</span></div>
+            <div className="text-3xl font-bold text-white">{metrics.ahtText} <span className="text-xs text-gray-400 font-normal">avg</span></div>
             <p className="text-xs text-blue-400">
               Shaved off 33 seconds average compared to manual QA benchmarks
             </p>
@@ -137,7 +143,7 @@ export default function OperationsDashboard() {
               <span className="text-gray-400 text-sm font-semibold">First Call Resolution (FCR)</span>
               <div className="p-2 bg-violet-500/10 text-violet-400 rounded-lg"><CheckCircle2 className="w-4 h-4" /></div>
             </div>
-            <div className="text-3xl font-bold text-white">82% <span className="text-xs text-gray-400 font-normal">target: 80%</span></div>
+            <div className="text-3xl font-bold text-white">82% <span className="text-xs text-gray-400 font-normal font-mono">target: 80%</span></div>
             <div className="text-xs text-violet-400 flex items-center gap-2 pt-2">
               <div className="w-full bg-violet-950/80 rounded-full h-2 overflow-hidden">
                 <div className="bg-violet-500 h-full rounded-full" style={{ width: '82%' }}></div>
@@ -185,31 +191,39 @@ export default function OperationsDashboard() {
               <div className="text-xs text-gray-500 flex items-center gap-1"><Database className="w-3.5 h-3.5" /> CRM: Connected</div>
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
-              {syncLogs.map((log) => (
-                <div key={log.id} className="p-4 rounded-xl bg-[#020617] border border-gray-800/80 flex items-start justify-between gap-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="font-semibold text-gray-300">{log.agent}</span>
-                      <span className="text-gray-600">•</span>
-                      <span className="text-gray-500">{log.time}</span>
-                      <span className="text-gray-600">•</span>
-                      <span className="px-2 py-0.5 rounded bg-blue-950 text-blue-400 font-mono text-[10px]">{log.callId}</span>
-                    </div>
-                    <p className="text-sm text-gray-400 leading-relaxed font-semibold">
-                      {log.summary}
-                    </p>
-                    <div className="text-xs text-gray-500">
-                      Auto-disposition code: <strong className="text-emerald-400 font-mono">{log.disposition}</strong>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-2 shrink-0">
-                    <span className="px-3 py-1 rounded-full bg-emerald-950/50 border border-emerald-800/40 text-emerald-400 text-xs font-bold flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Synced
-                    </span>
-                    <span className="text-[10px] text-gray-600">to {log.crm}</span>
-                  </div>
+              {syncLogs.length === 0 ? (
+                <div className="text-center py-12 text-gray-500 border border-dashed border-gray-800 rounded-xl space-y-3">
+                  <Database className="w-8 h-8 text-gray-700 mx-auto animate-pulse" />
+                  <p className="text-sm font-semibold">No active call logs found in the CRM pipeline</p>
+                  <p className="text-xs text-gray-600 max-w-sm mx-auto">Audited voice calls will dynamically appear here once AI analyses are generated.</p>
                 </div>
-              ))}
+              ) : (
+                syncLogs.map((log) => (
+                  <div key={log.id} className="p-4 rounded-xl bg-[#020617] border border-gray-800/80 flex items-start justify-between gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="font-semibold text-gray-300">{log.agent}</span>
+                        <span className="text-gray-600">•</span>
+                        <span className="text-gray-500">{log.time}</span>
+                        <span className="text-gray-600">•</span>
+                        <span className="px-2 py-0.5 rounded bg-blue-950 text-blue-400 font-mono text-[10px]">{log.callId}</span>
+                      </div>
+                      <p className="text-sm text-gray-400 leading-relaxed font-semibold">
+                        {log.summary}
+                      </p>
+                      <div className="text-xs text-gray-500">
+                        Auto-disposition code: <strong className="text-emerald-400 font-mono">{log.disposition}</strong>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      <span className="px-3 py-1 rounded-full bg-emerald-950/50 border border-emerald-800/40 text-emerald-400 text-xs font-bold flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Synced
+                      </span>
+                      <span className="text-[10px] text-gray-600">to {log.crm}</span>
+                    </div>
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
 
