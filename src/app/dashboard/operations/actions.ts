@@ -44,7 +44,6 @@ export async function getLiveOperationsData() {
         calls (
           id,
           duration,
-          call_sid,
           agent_id,
           users (
             name
@@ -81,7 +80,7 @@ export async function getLiveOperationsData() {
         id: a.id,
         time: new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         agent: agentName,
-        callId: a.calls?.call_sid ? a.calls.call_sid.substring(0, 8) : a.calls?.id?.substring(0, 8) || "N/A",
+        callId: a.calls?.id ? a.calls.id.substring(0, 8) : "N/A",
         summary: cleanSummary,
         disposition: "QA - Automated",
         status: "synced",
