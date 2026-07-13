@@ -45,8 +45,8 @@ export default function SolutionSection() {
           />
           <FeatureCard 
             icon={<AlertOctagon className="w-6 h-6 text-red-400" />}
-            title="Behavioral Escalations"
-            description="AI monitors for sarcasm or abuse, instantly sending alert emails to supervisors on detection."
+            title="Intelligent Escalations"
+            description="Guides agents live to de-escalate first; alerts supervisors only if severe triggers breach safety thresholds."
             delay={0.6}
           />
           <FeatureCard 
@@ -57,8 +57,8 @@ export default function SolutionSection() {
           />
           <FeatureCard 
             icon={<Globe className="w-6 h-6 text-indigo-400" />}
-            title="Multi-Language Audits"
-            description="Natively audits calls in English, Tagalog, Hindi, Spanish, and 90+ other global languages."
+            title="Telephony Integrations"
+            description="Secure SIPREC / Media stream connectors to easily link Twilio, Genesys, and Amazon Connect."
             delay={0.8}
           />
         </div>
