@@ -192,6 +192,7 @@ Return the result STRICTLY as a JSON object with this exact structure:
       await sendEscalationEmail({
         supabase,
         companyId: agent.company_id,
+        agentId,
         agentName: agent.name || 'Unknown Agent',
         callId,
         violationDetails: analysis.inappropriate_behavior_details || 'Abusive or inappropriate agent behavior detected.'

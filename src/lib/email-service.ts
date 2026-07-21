@@ -3,6 +3,7 @@ import nodemailer from 'nodemailer'
 interface SendEscalationEmailOptions {
   supabase: any
   companyId: string
+  agentId?: string
   agentName: string
   callId: string
   violationDetails: string
@@ -11,6 +12,7 @@ interface SendEscalationEmailOptions {
 export async function sendEscalationEmail({
   supabase,
   companyId,
+  agentId,
   agentName,
   callId,
   violationDetails
@@ -28,9 +30,34 @@ export async function sendEscalationEmail({
       return
     }
 
-    const recipient = company.escalation_email
+    // Resolve Recipient: Check if the specific Agent has an assigned Manager first
+    let recipient = company.escalation_email
+    let managerName: string | undefined
+
+    if (agentId) {
+      const { data: agentUser } = await supabase
+        .from('users')
+        .select('manager_id')
+        .eq('id', agentId)
+        .single()
+
+      if (agentUser?.manager_id) {
+        const { data: managerUser } = await supabase
+          .from('users')
+          .select('email, name')
+          .eq('id', agentUser.manager_id)
+          .single()
+
+        if (managerUser?.email) {
+          recipient = managerUser.email
+          managerName = managerUser.name
+          console.log(`[ESCALATION] Found assigned manager ${managerName} (${recipient}) for agent ${agentName}`)
+        }
+      }
+    }
+
     if (!recipient) {
-      console.log(`[ESCALATION] No escalation email configured for company ${company.name} (${companyId}). Skipping send.`)
+      console.log(`[ESCALATION] No escalation email or manager found for company ${company.name} (${companyId}). Skipping send.`)
       return
     }
 

@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS public.companies (
 CREATE TABLE public.users (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     company_id UUID REFERENCES public.companies(id) ON DELETE CASCADE,
+    manager_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
     role TEXT NOT NULL CHECK (role IN ('admin', 'qa', 'tl', 'agent')),
     name TEXT,
     email TEXT,
