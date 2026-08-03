@@ -20,8 +20,9 @@ export default function PricingCalculator({ config }: PricingCalculatorProps) {
   const totalMinutesPerMonth = totalCallsPerMonth * callLength
   const estimatedMonthlyBill = totalMinutesPerMonth * config.rate
   
-  // For manual QA, we calculate in local currency first, then convert to the rate currency for accurate comparison.
-  const manualQaMonthlyCostLocal = totalCallsPerMonth * config.manualQaCostPerCall
+  // For manual QA, we calculate a standard 5% sample audit rate of total volume in local currency first,
+  // then convert to the rate currency for accurate comparison.
+  const manualQaMonthlyCostLocal = (totalCallsPerMonth * 0.05) * config.manualQaCostPerCall
   const manualQaMonthlyCostRateCurrency = manualQaMonthlyCostLocal / (config.exchangeRateToUSD || 1)
   
   const monthlySavings = Math.max(0, manualQaMonthlyCostRateCurrency - estimatedMonthlyBill)
@@ -157,12 +158,12 @@ export default function PricingCalculator({ config }: PricingCalculatorProps) {
             </div>
 
             <div className="pt-3 border-t border-gray-800">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1">Manual QA Equivalent</span>
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1">Manual QA (5% Sample)</span>
               <div className="text-xl font-semibold text-gray-300">
                 {formatValue(manualQaMonthlyCostRateCurrency, config.symbol)}
               </div>
               <span className="text-[10px] text-gray-500 mt-0.5 block">
-                At {config.manualQaSymbol}{config.manualQaCostPerCall} equivalent cost per call reviewed ({formatValue(manualQaMonthlyCostLocal, config.manualQaSymbol)})
+                At {config.manualQaSymbol}{config.manualQaCostPerCall}/call for a standard 5% sample of total volume
               </span>
             </div>
           </div>

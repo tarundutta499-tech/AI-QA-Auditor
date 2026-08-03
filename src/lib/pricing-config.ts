@@ -15,7 +15,7 @@ export const PRICING_CONFIG: Record<string, RegionPricing> = {
   india: {
     id: "india",
     name: "India",
-    rate: 1.25,
+    rate: 0.20,
     currency: "INR",
     symbol: "₹",
     manualQaCostPerCall: 80,
