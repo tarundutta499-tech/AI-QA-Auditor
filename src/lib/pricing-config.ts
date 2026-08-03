@@ -26,7 +26,7 @@ export const PRICING_CONFIG: Record<string, RegionPricing> = {
   philippines: {
     id: "philippines",
     name: "Philippines",
-    rate: 0.035,
+    rate: 0.008,
     currency: "USD",
     symbol: "$",
     manualQaCostPerCall: 80,
@@ -38,7 +38,7 @@ export const PRICING_CONFIG: Record<string, RegionPricing> = {
   dubai: {
     id: "dubai",
     name: "Dubai/UAE",
-    rate: 0.06,
+    rate: 0.02,
     currency: "USD",
     symbol: "$",
     manualQaCostPerCall: 14,
@@ -50,7 +50,7 @@ export const PRICING_CONFIG: Record<string, RegionPricing> = {
   eu: {
     id: "eu",
     name: "EU (RO/BG/PL)",
-    rate: 0.05,
+    rate: 0.012,
     currency: "EUR",
     symbol: "€",
     manualQaCostPerCall: 2.05,
