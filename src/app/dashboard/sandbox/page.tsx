@@ -18,12 +18,17 @@ import {
   Info,
   CheckCircle2,
   Plus,
-  X
+  X,
+  Star,
+  Check,
+  AlertTriangle,
+  ArrowRight,
+  Loader2
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { sendSandboxTurn } from "./actions"
+import { sendSandboxTurn, generateSandboxReport } from "./actions"
 
 interface Message {
   role: "agent" | "customer"
@@ -90,6 +95,10 @@ export default function SandboxPage() {
   const [customDifficulty, setCustomDifficulty] = useState<"Easy" | "Medium" | "Hard">("Medium")
   const [showCustomModal, setShowCustomModal] = useState(false)
 
+  // Report State
+  const [loadingReport, setLoadingReport] = useState(false)
+  const [report, setReport] = useState<any | null>(null)
+
   const recognitionRef = useRef<any>(null)
   const synthesisRef = useRef<any>(null)
 
@@ -148,21 +157,37 @@ export default function SandboxPage() {
     setEmpathyScore(null)
     setCoachingTip("Greet the customer warmly and ask how you can resolve their issue.")
     setCompletedCheckpoints([])
-    
-    // Speak initial greeting
-    setTimeout(() => {
-      speakVoice(scenario.initialCustomerGreeting)
-    }, 500)
+    setReport(null)
   }
 
-  const endCall = () => {
-    setIsActiveCall(false)
+  const endCall = async () => {
     setIsRecording(false)
     if (synthesisRef.current) {
       synthesisRef.current.cancel()
     }
-    setHistory([])
-    setEmpathyScore(null)
+
+    if (history.length > 1 && selectedScenario) {
+      setLoadingReport(true)
+      const res = await generateSandboxReport(
+        selectedScenario.title,
+        selectedScenario.prompt,
+        selectedScenario.checkpoints,
+        history
+      )
+      setLoadingReport(false)
+      if (res.success && res.data) {
+        setReport(res.data)
+      } else {
+        // Fallback reset
+        setIsActiveCall(false)
+        setHistory([])
+        setEmpathyScore(null)
+      }
+    } else {
+      setIsActiveCall(false)
+      setHistory([])
+      setEmpathyScore(null)
+    }
   }
 
   const startListening = () => {
@@ -252,6 +277,14 @@ export default function SandboxPage() {
     setCustomDifficulty("Medium")
   }
 
+  const resetSandbox = () => {
+    setReport(null)
+    setIsActiveCall(false)
+    setHistory([])
+    setEmpathyScore(null)
+    setSelectedScenario(null)
+  }
+
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
       
@@ -278,7 +311,133 @@ export default function SandboxPage() {
         </div>
       </div>
 
-      {!isActiveCall ? (
+      {loadingReport ? (
+        // Evaluating page state
+        <div className="flex flex-col items-center justify-center py-24 space-y-4">
+          <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+          <h2 className="text-xl font-bold text-white">AI Auditor Evaluating Performance...</h2>
+          <p className="text-xs text-gray-400">Comparing mock-call transcript with campaign scorecard metrics.</p>
+        </div>
+      ) : report ? (
+        // SHOW PERFORMANCE REPORT
+        <div className="space-y-8 animate-in zoom-in-95 duration-200">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-white">Mock-Call Quality Audit Report</h2>
+              <p className="text-sm text-gray-400">Review highlights, improvements, and scorecard metrics evaluation below.</p>
+            </div>
+            <Button onClick={resetSandbox} className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold text-sm">
+              Start New Practice Session <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* QA Grade Score */}
+            <Card className="bg-[#0B1120] border-gray-800 shadow-xl flex flex-col justify-center items-center py-8">
+              <span className="text-xs uppercase font-bold text-gray-500 tracking-wider">Audit Score</span>
+              <div className={`text-6xl font-black rounded-full h-32 w-32 flex flex-col items-center justify-center border-8 mt-4 ${
+                report.score >= 80 ? 'text-green-500 border-green-500' :
+                report.score >= 50 ? 'text-yellow-500 border-yellow-500' :
+                'text-red-500 border-red-500'
+              }`}>
+                {report.score}%
+              </div>
+              <div className="flex items-center gap-1 mt-4">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star 
+                    key={s} 
+                    className={`w-5 h-5 ${
+                      s <= Math.round(report.score / 20) 
+                        ? 'fill-yellow-500 text-yellow-500' 
+                        : 'text-gray-700'
+                    }`} 
+                  />
+                ))}
+              </div>
+              <span className="text-xs text-gray-400 mt-2 font-semibold">
+                {report.score >= 80 ? 'Excellent Performance' : report.score >= 60 ? 'Needs Attention' : 'Unsatisfactory Grade'}
+              </span>
+            </Card>
+
+            {/* Strengths & Improvements */}
+            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Strengths */}
+              <Card className="bg-[#0B1120] border-gray-800 shadow-xl">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-green-400 text-base flex items-center gap-2">
+                    <Check className="w-5 h-5" /> What You Did Good
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-2">
+                  <ul className="space-y-3 text-xs text-gray-300">
+                    {report.strengths.map((str: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2 bg-[#020617]/40 p-2.5 rounded-xl border border-gray-800/40">
+                        <span className="text-green-500 mt-0.5 font-bold">✔</span>
+                        {str}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+
+              {/* Improvements */}
+              <Card className="bg-[#0B1120] border-gray-800 shadow-xl">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-yellow-400 text-base flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5" /> Could Have Done Better
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-2">
+                  <ul className="space-y-3 text-xs text-gray-300">
+                    {report.improvements.map((imp: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2 bg-[#020617]/40 p-2.5 rounded-xl border border-gray-800/40">
+                        <span className="text-yellow-500 mt-0.5 font-bold">⚠</span>
+                        {imp}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Detailed Scorecard Evaluation Breakdown */}
+          <Card className="bg-[#0B1120] border-gray-800 shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-white text-base">SOP Scorecard Parameter Breakdown</CardTitle>
+              <CardDescription>Evaluation of agent compliance against standard campaign procedures.</CardDescription>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <table className="w-full text-xs text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-800 text-gray-400 uppercase tracking-wider text-[10px]">
+                    <th className="py-3 px-4">Parameter Name</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4">Audit Evaluation & Feedback</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-800/40">
+                  {report.parameter_breakdown.map((param: any, idx: number) => (
+                    <tr key={idx} className="hover:bg-slate-950/20 transition-colors">
+                      <td className="py-4 px-4 font-bold text-white text-sm">{param.parameter}</td>
+                      <td className="py-4 px-4">
+                        <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                          param.passed 
+                            ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
+                            : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                        }`}>
+                          {param.passed ? 'PASSED' : 'FAILED'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 text-gray-300 leading-relaxed font-medium">{param.feedback}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </div>
+      ) : !isActiveCall ? (
         // Scenario Selection Workspace
         <div className="space-y-6">
           <div className="flex justify-between items-center">
@@ -398,7 +557,7 @@ export default function SandboxPage() {
                 <span className="text-xs text-gray-300 font-semibold uppercase tracking-wider">{selectedScenario?.title} Live Practice</span>
               </div>
               <Button onClick={endCall} variant="destructive" className="h-8 text-xs font-bold gap-1 rounded-lg">
-                <PhoneOff className="w-3.5 h-3.5" /> End Simulation
+                <PhoneOff className="w-3.5 h-3.5" /> End & Review Call
               </Button>
             </div>
 

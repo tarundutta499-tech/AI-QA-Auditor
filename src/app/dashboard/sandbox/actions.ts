@@ -56,3 +56,61 @@ Agent's Latest Turn: "${agentMessage}"`
     return { success: false, error: error.message }
   }
 }
+
+export async function generateSandboxReport(
+  scenarioTitle: string,
+  scenarioPrompt: string,
+  checkpoints: string[],
+  history: ConversationMessage[]
+) {
+  try {
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+
+    const evaluationPrompt = `You are a professional BPO QA Supervisor evaluating an agent's performance in a voice mock-call training simulation.
+Scenario Title: "${scenarioTitle}"
+Scenario Context: "${scenarioPrompt}"
+
+Objectives Scorecard Parameters to measure against:
+${checkpoints.map((c, i) => `${i + 1}. ${c}`).join('\n')}
+
+Here is the full conversation transcript:
+${history.map(h => `${h.role === 'agent' ? 'Agent' : 'Customer'}: ${h.text}`).join('\n')}
+
+Evaluate the agent's performance based on the transcript and objectives. Rate them on a scale of 0 to 100.
+Provide a clear analysis of:
+1. What the agent did well (Strengths).
+2. What the agent could have done better (Improvements).
+3. Parameter evaluation breakdown: for each parameter, evaluate if they passed or failed, and why.
+
+Output strictly in JSON format matching this schema:
+{
+  "score": 85, // Overall grade from 0 to 100
+  "strengths": ["Greeting was friendly and clear", "Kept calm even when client raised tone"],
+  "improvements": ["Should have explicitly asked for verification before sharing account details", "Forgot to summarize action steps at the end"],
+  "parameter_breakdown": [
+    {
+      "parameter": "Warm Greeting",
+      "passed": true,
+      "feedback": "Agent greeted with name and company branding clearly."
+    }
+  ]
+}`
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [{ role: 'user', parts: [{ text: evaluationPrompt }] }],
+      config: {
+        responseMimeType: 'application/json'
+      }
+    })
+
+    const resultText = response.text
+    if (!resultText) throw new Error("No evaluation report generated")
+
+    const data = JSON.parse(resultText)
+    return { success: true, data }
+  } catch (error: any) {
+    console.error("Sandbox evaluation report error:", error)
+    return { success: false, error: error.message }
+  }
+}
