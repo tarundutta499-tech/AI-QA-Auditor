@@ -2,14 +2,14 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { ShieldCheck, ArrowLeft, User, Key } from "lucide-react"
-import { acceptInvite } from './actions'
+import { ShieldCheck, ArrowLeft } from "lucide-react"
 
 const getAdminClient = () => createSupabaseClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+
+import { JoinForm } from './JoinForm'
 
 export default async function JoinPage(props: {
   searchParams: Promise<{ token?: string }>
@@ -77,79 +77,7 @@ export default async function JoinPage(props: {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="bg-[#0B1120] py-8 px-4 shadow-2xl border border-gray-800/60 sm:rounded-2xl sm:px-10">
-          
-          <form action={async (formData) => {
-            const result = await acceptInvite(formData)
-            if (result?.error) {
-              alert(result.error) // Simple fallback since we don't have an error state in this component yet
-            } else if (result?.success) {
-              window.location.href = '/dashboard'
-            }
-          }} className="space-y-6">
-            <input type="hidden" name="token" value={token} />
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300">
-                Email Address
-              </label>
-              <div className="mt-1">
-                <Input
-                  type="email"
-                  value={invite.email}
-                  disabled
-                  className="bg-[#020617] border-gray-800 text-gray-500 cursor-not-allowed"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300">
-                Your Full Name
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-4 w-4 text-gray-500" />
-                </div>
-                <Input
-                  type="text"
-                  name="fullName"
-                  required
-                  className="bg-[#020617] border-gray-800 text-white pl-10 focus:border-blue-500 focus:ring-blue-500/20"
-                  placeholder="Jane Doe"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300">
-                Set a Password
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Key className="h-4 w-4 text-gray-500" />
-                </div>
-                <Input
-                  type="password"
-                  name="password"
-                  required
-                  minLength={6}
-                  className="bg-[#020617] border-gray-800 text-white pl-10 focus:border-blue-500 focus:ring-blue-500/20"
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Button
-                type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-[#0B1120] transition-colors"
-              >
-                Accept Invite & Join
-              </Button>
-            </div>
-
-          </form>
-          
+          <JoinForm token={token} email={invite.email} />
         </div>
       </div>
     </div>
