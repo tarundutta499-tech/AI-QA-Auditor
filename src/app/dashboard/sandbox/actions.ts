@@ -146,3 +146,87 @@ export async function getCompanyScorecards() {
     return { success: false, error: error.message }
   }
 }
+
+export async function getAIRecommendedScenarios() {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: "Unauthorized" }
+
+    const { data: dbUser } = await supabase.from('users').select('company_id').eq('id', user.id).single()
+    if (!dbUser?.company_id) return { success: false, error: "No company associated with user" }
+
+    // Fetch the 10 most recent audited calls to analyze performance bottlenecks
+    const { data: recentCalls, error: fetchError } = await supabase
+      .from('calls')
+      .select(`
+        id,
+        summary,
+        audits (
+          compliance_percent,
+          empathy_score,
+          fatal_errors,
+          coaching_notes
+        )
+      `)
+      .eq('company_id', dbUser.company_id)
+      .eq('status', 'audited')
+      .order('created_at', { ascending: false })
+      .limit(10)
+
+    if (fetchError) throw fetchError
+
+    // If no audited calls exist yet, return empty list (UI will fallback to default scorecards)
+    if (!recentCalls || recentCalls.length === 0) {
+      return { success: true, scenarios: [] }
+    }
+
+    // Format audit data for Gemini
+    const auditsSummary = recentCalls.map((c: any, i) => {
+      const audit = c.audits?.[0] || {}
+      return `${i + 1}. Call Summary: "${c.summary || 'N/A'}". Compliance Score: ${audit.compliance_percent || 'N/A'}%. Empathy Score: ${audit.empathy_score || 'N/A'}%. Critical Failures: ${JSON.stringify(audit.fatal_errors || 'None')}. Coaching Notes: ${JSON.stringify(audit.coaching_notes || 'None')}.`
+    }).join('\n')
+
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+
+    const analysisPrompt = `You are a BPO Training Operations Director.
+Analyze the following recent BPO call audit logs to identify critical failure trends (e.g. agents failing script guidelines, customer disputes, poor empathy handling, product questions).
+Generate exactly 3 custom training scenarios to help new hires practice solving these specific issues in the simulator.
+
+Recent Call Audits & Bottlenecks:
+${auditsSummary}
+
+Ensure the training scenario Title clearly explains why it is recommended (e.g. "Auto-Billing Dispute (High Disagreements)" or "Identity Check Compliance (Failed SOP Procedural Step)").
+Output strictly in JSON format matching this schema:
+{
+  "scenarios": [
+    {
+      "title": "Scenario Title",
+      "description": "Short explanation of the recent failure trends this practice call targets to fix.",
+      "difficulty": "Easy" | "Medium" | "Hard",
+      "prompt": "Detailed system character instructions for the customer roleplayer simulator.",
+      "initialCustomerGreeting": "First dialogue sentence from the customer.",
+      "checkpoints": ["Objective 1", "Objective 2", "Objective 3"]
+    }
+  ]
+}`
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [{ role: 'user', parts: [{ text: analysisPrompt }] }],
+      config: {
+        responseMimeType: 'application/json'
+      }
+    })
+
+    const resultText = response.text
+    if (!resultText) throw new Error("No scenarios recommended")
+
+    const data = JSON.parse(resultText)
+    return { success: true, scenarios: data.scenarios || [] }
+
+  } catch (error: any) {
+    console.error("Fetch AI recommendations error:", error)
+    return { success: false, error: error.message }
+  }
+}

@@ -23,12 +23,14 @@ import {
   Check,
   AlertTriangle,
   ArrowRight,
-  Loader2
+  Loader2,
+  Flame,
+  BrainCircuit
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { sendSandboxTurn, generateSandboxReport, getCompanyScorecards } from "./actions"
+import { sendSandboxTurn, generateSandboxReport, getCompanyScorecards, getAIRecommendedScenarios } from "./actions"
 
 interface Message {
   role: "agent" | "customer"
@@ -77,6 +79,7 @@ const DEFAULT_SCENARIOS: Scenario[] = [
 
 export default function SandboxPage() {
   const [scenarios, setScenarios] = useState<Scenario[]>(DEFAULT_SCENARIOS)
+  const [aiScenarios, setAiScenarios] = useState<Scenario[]>([])
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null)
   const [isActiveCall, setIsActiveCall] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
@@ -97,17 +100,20 @@ export default function SandboxPage() {
 
   // Report State
   const [loadingReport, setLoadingReport] = useState(false)
+  const [loadingAi, setLoadingAi] = useState(true)
   const [report, setReport] = useState<any | null>(null)
 
   const recognitionRef = useRef<any>(null)
   const synthesisRef = useRef<any>(null)
 
-  // Load Scorecards from DB and convert to Sandbox Scenarios
+  // Load Scorecards & AI Recommended Scenarios
   useEffect(() => {
-    async function loadScorecards() {
-      const res = await getCompanyScorecards()
-      if (res.success && res.scorecards) {
-        const loadedScenarios: Scenario[] = res.scorecards.map((sc: any) => ({
+    async function loadScenarios() {
+      // 1. Fetch Company Scorecards
+      const scRes = await getCompanyScorecards()
+      let scorecardScenarios: Scenario[] = []
+      if (scRes.success && scRes.scorecards) {
+        scorecardScenarios = scRes.scorecards.map((sc: any) => ({
           id: sc.id,
           title: sc.name,
           description: sc.description || "Simulate live customer support calls using active campaign scorecards.",
@@ -116,10 +122,21 @@ export default function SandboxPage() {
           initialCustomerGreeting: `Hello, I need help in regards to the ${sc.name} campaign issue.`,
           checkpoints: sc.scorecard_parameters.map((p: any) => p.name)
         }))
-        setScenarios([...loadedScenarios, ...DEFAULT_SCENARIOS])
       }
+      setScenarios([...scorecardScenarios, ...DEFAULT_SCENARIOS])
+
+      // 2. Fetch AI Audit Recommendations
+      setLoadingAi(true)
+      const aiRes = await getAIRecommendedScenarios()
+      if (aiRes.success && aiRes.scenarios) {
+        setAiScenarios(aiRes.scenarios.map((s: any, idx: number) => ({
+          id: `ai_${idx}_${Date.now()}`,
+          ...s
+        })))
+      }
+      setLoadingAi(false)
     }
-    loadScorecards()
+    loadScenarios()
   }, [])
 
   // Initialize Speech Web API
@@ -336,7 +353,7 @@ export default function SandboxPage() {
         <div className="flex flex-col items-center justify-center py-24 space-y-4">
           <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
           <h2 className="text-xl font-bold text-white">AI Auditor Evaluating Performance...</h2>
-          <p className="text-xs text-gray-400">Comparing mock-call transcript with campaign scorecard metrics.</p>
+          <p className="text-xs text-gray-400">Comparing mock-call transcript with campaign scorecard parameters.</p>
         </div>
       ) : report ? (
         // SHOW PERFORMANCE REPORT
@@ -459,57 +476,128 @@ export default function SandboxPage() {
         </div>
       ) : !isActiveCall ? (
         // Scenario Selection Workspace
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <div className="text-lg font-bold text-white">Select Call Situation Scenario:</div>
-            <Button onClick={() => setShowCustomModal(true)} className="bg-blue-600 hover:bg-blue-500 text-white gap-2 rounded-xl text-xs font-semibold h-9 px-4">
-              <Plus className="w-4 h-4" /> Create Custom Scenario
-            </Button>
-          </div>
+        <div className="space-y-10">
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {scenarios.map((item) => (
-              <Card key={item.id} className="bg-[#0B1120] border-gray-800 hover:border-blue-500/50 transition-all flex flex-col justify-between shadow-lg">
-                <CardHeader>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                      item.difficulty === 'Easy' ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
-                      item.difficulty === 'Medium' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
-                      'bg-red-500/10 text-red-400 border border-red-500/20'
-                    }`}>
-                      {item.difficulty} Difficulty
-                    </span>
-                    {item.id.startsWith('custom_') && (
-                      <span className="text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded uppercase font-extrabold tracking-wider">Custom</span>
-                    )}
-                    {!item.id.startsWith('custom_') && item.id !== 'billing_dispute' && item.id !== 'tech_support' && item.id !== 'abusive_caller' && (
-                      <span className="text-[9px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded uppercase font-extrabold tracking-wider">Scorecard</span>
-                    )}
-                  </div>
-                  <CardTitle className="text-white text-lg">{item.title}</CardTitle>
-                  <CardDescription className="text-gray-400 text-sm mt-1">{item.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="border-t border-gray-800/60 pt-4 mt-2">
-                    <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block mb-2">Required SOP Objectives:</span>
-                    <ul className="space-y-1 text-xs text-gray-400">
-                      {item.checkpoints.map((chk, idx) => (
-                        <li key={idx} className="flex items-center gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-gray-700 animate-in fade-in" />
-                          {chk}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <Button 
-                    onClick={() => startCall(item)} 
-                    className="w-full bg-blue-600 hover:bg-blue-500 text-white mt-6 rounded-xl flex items-center justify-center gap-2"
-                  >
-                    <Play className="w-4 h-4 fill-white" /> Start Practice Call
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+          {/* AI GENERATED RECOMMENDATIONS SECTION */}
+          {aiScenarios.length > 0 && (
+            <div className="space-y-4 bg-gradient-to-br from-blue-950/20 to-purple-950/10 border border-blue-500/10 p-6 rounded-3xl relative overflow-hidden shadow-2xl">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+              
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/15 rounded-xl text-blue-400 shadow-md">
+                  <BrainCircuit className="w-6 h-6 animate-pulse" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    AI-Driven Scenarios <span className="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider font-extrabold animate-pulse">Live from QA Audits</span>
+                  </h2>
+                  <p className="text-xs text-gray-400 mt-0.5">These custom training roleplays were automatically synthesized to target the most common failures found in your team's audited calls.</p>
+                </div>
+              </div>
+
+              {loadingAi ? (
+                <div className="flex items-center gap-2 py-8 text-xs text-gray-400 font-medium">
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-500" /> Analysing recent compliance trends...
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                  {aiScenarios.map((item) => (
+                    <Card key={item.id} className="bg-[#0B1120]/80 border-blue-900/40 hover:border-blue-500/50 transition-all flex flex-col justify-between shadow-xl">
+                      <CardHeader className="pb-3">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                            Failed Audit Fix
+                          </span>
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                            item.difficulty === 'Easy' ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
+                            item.difficulty === 'Medium' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
+                            'bg-red-500/10 text-red-400 border border-red-500/20'
+                          }`}>
+                            {item.difficulty}
+                          </span>
+                        </div>
+                        <CardTitle className="text-white text-base">{item.title}</CardTitle>
+                        <CardDescription className="text-gray-400 text-xs mt-1 leading-relaxed">{item.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="border-t border-gray-800/80 pt-3">
+                          <span className="text-[9px] uppercase font-bold text-gray-500 tracking-wider block mb-1.5">Scorecard Objectives:</span>
+                          <ul className="space-y-1 text-[11px] text-gray-400">
+                            {item.checkpoints.map((chk, idx) => (
+                              <li key={idx} className="flex items-center gap-1.5">
+                                <CheckCircle2 className="w-3 h-3 text-blue-500 shrink-0" />
+                                <span className="truncate">{chk}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        <Button 
+                          onClick={() => startCall(item)} 
+                          className="w-full bg-blue-600 hover:bg-blue-500 text-white mt-5 rounded-xl flex items-center justify-center gap-2 text-xs h-9 font-bold"
+                        >
+                          <Play className="w-3.5 h-3.5 fill-white" /> Train on Audited Issue
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* MAIN SCENARIO SELECTION GRID */}
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <div className="text-lg font-bold text-white">Campaign & Standard Scenarios:</div>
+              <Button onClick={() => setShowCustomModal(true)} className="bg-blue-600 hover:bg-blue-500 text-white gap-2 rounded-xl text-xs font-semibold h-9 px-4">
+                <Plus className="w-4 h-4" /> Create Custom Scenario
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {scenarios.map((item) => (
+                <Card key={item.id} className="bg-[#0B1120] border-gray-800 hover:border-blue-500/50 transition-all flex flex-col justify-between shadow-lg">
+                  <CardHeader>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        item.difficulty === 'Easy' ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
+                        item.difficulty === 'Medium' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
+                        'bg-red-500/10 text-red-400 border border-red-500/20'
+                      }`}>
+                        {item.difficulty} Difficulty
+                      </span>
+                      {item.id.startsWith('custom_') && (
+                        <span className="text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded uppercase font-extrabold tracking-wider">Custom</span>
+                      )}
+                      {!item.id.startsWith('custom_') && item.id !== 'billing_dispute' && item.id !== 'tech_support' && item.id !== 'abusive_caller' && (
+                        <span className="text-[9px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded uppercase font-extrabold tracking-wider font-semibold">Scorecard</span>
+                      )}
+                    </div>
+                    <CardTitle className="text-white text-lg">{item.title}</CardTitle>
+                    <CardDescription className="text-gray-400 text-sm mt-1">{item.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="border-t border-gray-800/60 pt-4 mt-2">
+                      <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block mb-2">Required SOP Objectives:</span>
+                      <ul className="space-y-1 text-xs text-gray-400">
+                        {item.checkpoints.map((chk, idx) => (
+                          <li key={idx} className="flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-gray-700 animate-in fade-in" />
+                            {chk}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <Button 
+                      onClick={() => startCall(item)} 
+                      className="w-full bg-blue-600 hover:bg-blue-500 text-white mt-6 rounded-xl flex items-center justify-center gap-2"
+                    >
+                      <Play className="w-4 h-4 fill-white" /> Start Practice Call
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         </div>
       ) : (
