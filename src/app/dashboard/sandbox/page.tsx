@@ -16,10 +16,13 @@ import {
   Volume2, 
   VolumeX, 
   Info,
-  CheckCircle2
+  CheckCircle2,
+  Plus,
+  X
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { sendSandboxTurn } from "./actions"
 
 interface Message {
@@ -37,7 +40,7 @@ interface Scenario {
   checkpoints: string[]
 }
 
-const SCENARIOS: Scenario[] = [
+const DEFAULT_SCENARIOS: Scenario[] = [
   {
     id: "billing_dispute",
     title: "Angry Billing Dispute",
@@ -68,6 +71,7 @@ const SCENARIOS: Scenario[] = [
 ]
 
 export default function SandboxPage() {
+  const [scenarios, setScenarios] = useState<Scenario[]>(DEFAULT_SCENARIOS)
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null)
   const [isActiveCall, setIsActiveCall] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
@@ -78,6 +82,14 @@ export default function SandboxPage() {
   const [coachingTip, setCoachingTip] = useState<string>("Start the call to receive live coaching.")
   const [completedCheckpoints, setCompletedCheckpoints] = useState<string[]>([])
   
+  // Custom Scenario States
+  const [customTitle, setCustomTitle] = useState("")
+  const [customDesc, setCustomDesc] = useState("")
+  const [customGreeting, setCustomGreeting] = useState("")
+  const [customObjectives, setCustomObjectives] = useState("")
+  const [customDifficulty, setCustomDifficulty] = useState<"Easy" | "Medium" | "Hard">("Medium")
+  const [showCustomModal, setShowCustomModal] = useState(false)
+
   const recognitionRef = useRef<any>(null)
   const synthesisRef = useRef<any>(null)
 
@@ -190,7 +202,6 @@ export default function SandboxPage() {
         setCompletedCheckpoints(prev => {
           const updated = [...prev]
           responseData.checklist_completed.forEach((chk: string) => {
-            // Match checklist items loosely
             const match = selectedScenario.checkpoints.find(
               c => c.toLowerCase().includes(chk.toLowerCase()) || chk.toLowerCase().includes(c.toLowerCase())
             )
@@ -207,6 +218,38 @@ export default function SandboxPage() {
       setCoachingTip("Error syncing response. Check connection.")
       setIsSpeaking(false)
     }
+  }
+
+  const handleCreateCustomScenario = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!customTitle || !customDesc || !customGreeting) {
+      alert("Please fill in all required fields.")
+      return
+    }
+
+    const checkpointsArray = customObjectives
+      ? customObjectives.split(",").map(c => c.trim()).filter(Boolean)
+      : ["Polite Greeting", "Active Listening", "Problem Resolution"]
+
+    const newScenario: Scenario = {
+      id: `custom_${Date.now()}`,
+      title: customTitle,
+      description: customDesc,
+      difficulty: customDifficulty,
+      prompt: `${customDesc}. Speak in character as a customer who starts the conversation by saying: "${customGreeting}". React dynamically to the agent, checking if they hit these guidelines: ${checkpointsArray.join(', ')}`,
+      initialCustomerGreeting: customGreeting,
+      checkpoints: checkpointsArray
+    }
+
+    setScenarios(prev => [newScenario, ...prev])
+    setShowCustomModal(false)
+
+    // Clear form
+    setCustomTitle("")
+    setCustomDesc("")
+    setCustomGreeting("")
+    setCustomObjectives("")
+    setCustomDifficulty("Medium")
   }
 
   return (
@@ -238,9 +281,15 @@ export default function SandboxPage() {
       {!isActiveCall ? (
         // Scenario Selection Workspace
         <div className="space-y-6">
-          <div className="text-lg font-bold text-white">Select Call Situation Scenario:</div>
+          <div className="flex justify-between items-center">
+            <div className="text-lg font-bold text-white">Select Call Situation Scenario:</div>
+            <Button onClick={() => setShowCustomModal(true)} className="bg-blue-600 hover:bg-blue-500 text-white gap-2 rounded-xl text-xs font-semibold h-9 px-4">
+              <Plus className="w-4 h-4" /> Create Custom Scenario
+            </Button>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {SCENARIOS.map((item) => (
+            {scenarios.map((item) => (
               <Card key={item.id} className="bg-[#0B1120] border-gray-800 hover:border-blue-500/50 transition-all flex flex-col justify-between shadow-lg">
                 <CardHeader>
                   <div className="flex justify-between items-center mb-2">
@@ -251,6 +300,9 @@ export default function SandboxPage() {
                     }`}>
                       {item.difficulty} Difficulty
                     </span>
+                    {item.id.startsWith('custom_') && (
+                      <span className="text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded uppercase font-extrabold tracking-wider">Custom</span>
+                    )}
                   </div>
                   <CardTitle className="text-white text-lg">{item.title}</CardTitle>
                   <CardDescription className="text-gray-400 text-sm mt-1">{item.description}</CardDescription>
@@ -261,7 +313,7 @@ export default function SandboxPage() {
                     <ul className="space-y-1 text-xs text-gray-400">
                       {item.checkpoints.map((chk, idx) => (
                         <li key={idx} className="flex items-center gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-gray-700" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-gray-700 animate-in fade-in" />
                           {chk}
                         </li>
                       ))}
@@ -416,6 +468,99 @@ export default function SandboxPage() {
 
         </div>
       )}
+
+      {/* CREATE CUSTOM SCENARIO MODAL */}
+      <AnimatePresence>
+        {showCustomModal && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-[#0B1120] border border-gray-800 rounded-3xl p-6 max-w-lg w-full space-y-6 shadow-2xl relative"
+            >
+              <button 
+                onClick={() => setShowCustomModal(false)}
+                className="absolute top-4 right-4 text-gray-500 hover:text-white p-1 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div>
+                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                  <Cpu className="text-blue-500 w-5 h-5" /> Custom Call Scenario
+                </h3>
+                <p className="text-xs text-gray-400 mt-1">Configure a custom customer situation to train agents on specific customer issues.</p>
+              </div>
+
+              <form onSubmit={handleCreateCustomScenario} className="space-y-4 text-sm">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-400">Scenario Title *</label>
+                  <Input 
+                    value={customTitle} 
+                    onChange={(e) => setCustomTitle(e.target.value)} 
+                    placeholder="e.g. Stripe Refund Delayed" 
+                    className="bg-[#020617] border-gray-800 rounded-xl"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-400">Situation Description *</label>
+                  <textarea
+                    value={customDesc}
+                    onChange={(e) => setCustomDesc(e.target.value)}
+                    placeholder="Describe the customer's issue, their mood, and what they want to achieve."
+                    rows={3}
+                    className="w-full bg-[#020617] border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-400">Initial Customer Greeting *</label>
+                  <Input 
+                    value={customGreeting} 
+                    onChange={(e) => setCustomGreeting(e.target.value)} 
+                    placeholder="The very first thing the customer says when the agent answers." 
+                    className="bg-[#020617] border-gray-800 rounded-xl"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-400">Checkpoints / Objectives (Comma-separated)</label>
+                  <Input 
+                    value={customObjectives} 
+                    onChange={(e) => setCustomObjectives(e.target.value)} 
+                    placeholder="e.g. Verify account, Explain 5-day latency, Propose alternative payment" 
+                    className="bg-[#020617] border-gray-800 rounded-xl"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-400">Difficulty Level</label>
+                    <select
+                      value={customDifficulty}
+                      onChange={(e) => setCustomDifficulty(e.target.value as any)}
+                      className="w-full h-10 bg-[#020617] border border-gray-800 rounded-xl px-3 text-white text-xs"
+                    >
+                      <option value="Easy">Easy</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Hard">Hard</option>
+                    </select>
+                  </div>
+                </div>
+
+                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl h-11 font-bold">
+                  Create and Save Scenario
+                </Button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   )
