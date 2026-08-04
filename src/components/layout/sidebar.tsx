@@ -33,6 +33,7 @@ export function Sidebar({ role = 'agent' }: { role?: string }) {
       { label: 'My Dashboard', href: '/dashboard', icon: Home },
       { label: 'My Audits', href: '/dashboard/audits', icon: ListChecks },
       { label: 'My Scores', href: '/dashboard/reports', icon: BarChart3 },
+      { label: 'AI Agent Sandbox', href: '/dashboard/sandbox', icon: Cpu },
       { label: 'Agent Co-Pilot (Live)', href: '/dashboard/agent-assist', icon: Activity },
       { label: 'Knowledge Base', href: '/dashboard/knowledge', icon: BookOpen },
     ]
