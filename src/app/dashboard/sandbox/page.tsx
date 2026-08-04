@@ -28,7 +28,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { sendSandboxTurn, generateSandboxReport } from "./actions"
+import { sendSandboxTurn, generateSandboxReport, getCompanyScorecards } from "./actions"
 
 interface Message {
   role: "agent" | "customer"
@@ -101,6 +101,26 @@ export default function SandboxPage() {
 
   const recognitionRef = useRef<any>(null)
   const synthesisRef = useRef<any>(null)
+
+  // Load Scorecards from DB and convert to Sandbox Scenarios
+  useEffect(() => {
+    async function loadScorecards() {
+      const res = await getCompanyScorecards()
+      if (res.success && res.scorecards) {
+        const loadedScenarios: Scenario[] = res.scorecards.map((sc: any) => ({
+          id: sc.id,
+          title: sc.name,
+          description: sc.description || "Simulate live customer support calls using active campaign scorecards.",
+          difficulty: "Medium",
+          prompt: `Roleplay a customer for this campaign: "${sc.description || sc.name}". Evaluate if the agent satisfies the scorecard guidelines: ${sc.scorecard_parameters.map((p: any) => p.name).join(', ')}.`,
+          initialCustomerGreeting: `Hello, I need help in regards to the ${sc.name} campaign issue.`,
+          checkpoints: sc.scorecard_parameters.map((p: any) => p.name)
+        }))
+        setScenarios([...loadedScenarios, ...DEFAULT_SCENARIOS])
+      }
+    }
+    loadScorecards()
+  }, [])
 
   // Initialize Speech Web API
   useEffect(() => {
@@ -461,6 +481,9 @@ export default function SandboxPage() {
                     </span>
                     {item.id.startsWith('custom_') && (
                       <span className="text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded uppercase font-extrabold tracking-wider">Custom</span>
+                    )}
+                    {!item.id.startsWith('custom_') && item.id !== 'billing_dispute' && item.id !== 'tech_support' && item.id !== 'abusive_caller' && (
+                      <span className="text-[9px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded uppercase font-extrabold tracking-wider">Scorecard</span>
                     )}
                   </div>
                   <CardTitle className="text-white text-lg">{item.title}</CardTitle>

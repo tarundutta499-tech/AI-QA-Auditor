@@ -1,6 +1,7 @@
 "use server"
 
 import { GoogleGenAI } from '@google/genai'
+import { createClient } from '@/utils/supabase/server'
 
 interface ConversationMessage {
   role: 'agent' | 'customer'
@@ -111,6 +112,37 @@ Output strictly in JSON format matching this schema:
     return { success: true, data }
   } catch (error: any) {
     console.error("Sandbox evaluation report error:", error)
+    return { success: false, error: error.message }
+  }
+}
+
+export async function getCompanyScorecards() {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: "Unauthorized" }
+
+    const { data: dbUser } = await supabase.from('users').select('company_id').eq('id', user.id).single()
+    if (!dbUser?.company_id) return { success: false, error: "No company associated with user" }
+
+    const { data: scorecards, error } = await supabase
+      .from('scorecards')
+      .select(`
+        id,
+        name,
+        description,
+        scorecard_parameters (
+          id,
+          name,
+          max_score
+        )
+      `)
+      .eq('company_id', dbUser.company_id)
+
+    if (error) throw error
+    return { success: true, scorecards: scorecards || [] }
+  } catch (error: any) {
+    console.error("Fetch scorecards error:", error)
     return { success: false, error: error.message }
   }
 }
