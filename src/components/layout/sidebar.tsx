@@ -18,6 +18,8 @@ export function Sidebar({ role = 'agent' }: { role?: string }) {
     { label: 'Agent Co-Pilot (Live)', href: '/dashboard/agent-assist', icon: Activity },
     { label: 'Operations & ACW', href: '/dashboard/operations', icon: Workflow },
     { label: 'Pulse AI Analyst', href: '/dashboard/pulse-ai', icon: Sparkles },
+    { label: 'DSAT Alerts', href: '/dashboard/dsat', icon: AlertTriangle },
+    { label: 'QA Calibrations', href: '/dashboard/calibrations', icon: Scale },
     { label: 'Scorecards', href: '/dashboard/scorecards', icon: ListChecks },
     { label: 'Knowledge Base', href: '/dashboard/knowledge', icon: BookOpen },
     { label: 'Team Members', href: '/dashboard/agents', icon: Users },
