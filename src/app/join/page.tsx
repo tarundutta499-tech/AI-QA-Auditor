@@ -11,11 +11,10 @@ const getAdminClient = () => createSupabaseClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-export default async function JoinPage({
-  searchParams,
-}: {
-  searchParams: { token?: string }
+export default async function JoinPage(props: {
+  searchParams: Promise<{ token?: string }>
 }) {
+  const searchParams = await props.searchParams
   const token = searchParams.token
 
   if (!token) {
