@@ -127,4 +127,8 @@
   html {
     @apply font-sans;
   }
+  ::selection {
+    background-color: oklch(0.85 0.1 260); /* highlight background color */
+    color: #000000 !important; /* high contrast selected text color */
+  }
 }
