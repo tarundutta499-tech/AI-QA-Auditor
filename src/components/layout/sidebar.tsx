@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, BarChart3, Settings, LogOut, ListChecks, FileText, Activity, Upload, BookOpen, AlertTriangle, Scale, CreditCard, Workflow, Sparkles } from 'lucide-react'
+import { Home, Users, BarChart3, Settings, LogOut, ListChecks, FileText, Activity, Upload, BookOpen, AlertTriangle, Scale, CreditCard, Workflow, Sparkles, Cpu } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { signout } from '@/app/login/actions'
 import { cn } from '@/lib/utils'
@@ -18,6 +18,7 @@ export function Sidebar({ role = 'agent' }: { role?: string }) {
     { label: 'Agent Co-Pilot (Live)', href: '/dashboard/agent-assist', icon: Activity },
     { label: 'Operations & ACW', href: '/dashboard/operations', icon: Workflow },
     { label: 'Pulse AI Analyst', href: '/dashboard/pulse-ai', icon: Sparkles },
+    { label: 'AI Agent Sandbox', href: '/dashboard/sandbox', icon: Cpu },
     { label: 'DSAT Alerts', href: '/dashboard/dsat', icon: AlertTriangle },
     { label: 'QA Calibrations', href: '/dashboard/calibrations', icon: Scale },
     { label: 'Scorecards', href: '/dashboard/scorecards', icon: ListChecks },
