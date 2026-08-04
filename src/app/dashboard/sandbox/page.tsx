@@ -328,7 +328,7 @@ export default function SandboxPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-800 pb-6">
         <div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
+          <h1 className="text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-3">
             <Cpu className="text-blue-500 w-8 h-8 animate-pulse" />
             AI Agent Sandbox
           </h1>
@@ -488,7 +488,7 @@ export default function SandboxPage() {
                   <BrainCircuit className="w-6 h-6 animate-pulse" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                     AI-Driven Scenarios <span className="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider font-extrabold animate-pulse">Live from QA Audits</span>
                   </h2>
                   <p className="text-xs text-gray-400 mt-0.5">These custom training roleplays were automatically synthesized to target the most common failures found in your team's audited calls.</p>
@@ -516,7 +516,7 @@ export default function SandboxPage() {
                             {item.difficulty}
                           </span>
                         </div>
-                        <CardTitle className="text-white text-base">{item.title}</CardTitle>
+                        <CardTitle className="text-foreground text-base">{item.title}</CardTitle>
                         <CardDescription className="text-gray-400 text-xs mt-1 leading-relaxed">{item.description}</CardDescription>
                       </CardHeader>
                       <CardContent className="pt-0">
@@ -548,7 +548,7 @@ export default function SandboxPage() {
           {/* MAIN SCENARIO SELECTION GRID */}
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <div className="text-lg font-bold text-white">Campaign & Standard Scenarios:</div>
+              <div className="text-lg font-bold text-foreground">Campaign & Standard Scenarios:</div>
               <Button onClick={() => setShowCustomModal(true)} className="bg-blue-600 hover:bg-blue-500 text-white gap-2 rounded-xl text-xs font-semibold h-9 px-4">
                 <Plus className="w-4 h-4" /> Create Custom Scenario
               </Button>
@@ -573,7 +573,7 @@ export default function SandboxPage() {
                         <span className="text-[9px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded uppercase font-extrabold tracking-wider font-semibold">Scorecard</span>
                       )}
                     </div>
-                    <CardTitle className="text-white text-lg">{item.title}</CardTitle>
+                    <CardTitle className="text-foreground text-lg">{item.title}</CardTitle>
                     <CardDescription className="text-gray-400 text-sm mt-1">{item.description}</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-0">
