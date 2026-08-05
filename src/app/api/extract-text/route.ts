@@ -4,6 +4,7 @@ import { writeFile, unlink } from 'fs/promises'
 import os from 'os'
 import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
+import mammoth from 'mammoth'
 
 export async function POST(req: NextRequest) {
   let tempFilePath = ''
@@ -24,14 +25,23 @@ export async function POST(req: NextRequest) {
     tempFilePath = path.join(os.tmpdir(), tempFileName)
     await writeFile(tempFilePath, buffer)
 
-    // Upload to Gemini
     let mimeType = documentFile.type
     if (!mimeType) {
       if (documentFile.name.endsWith('.pdf')) mimeType = 'application/pdf'
       else if (documentFile.name.endsWith('.txt')) mimeType = 'text/plain'
+      else if (documentFile.name.endsWith('.docx')) mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       else mimeType = 'application/octet-stream'
     }
 
+    // Direct Mammoth parsing for Word documents (.docx)
+    if (documentFile.name.endsWith('.docx') || mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      const result = await mammoth.extractRawText({ path: tempFilePath })
+      const text = result.value
+      await unlink(tempFilePath).catch(console.error)
+      return NextResponse.json({ success: true, text })
+    }
+
+    // Upload to Gemini
     geminiFile = await ai.files.upload({
       file: tempFilePath,
       config: { mimeType: mimeType },
