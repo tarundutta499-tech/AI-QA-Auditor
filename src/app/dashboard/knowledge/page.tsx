@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
-import { KnowledgeManager } from '@/components/knowledge/knowledge-manager'
+import { KnowledgeTabs } from '@/components/knowledge/knowledge-tabs'
 
 export default async function KnowledgePage() {
   const supabase = await createClient()
@@ -22,7 +22,7 @@ export default async function KnowledgePage() {
         <p className="text-muted-foreground mt-2">Upload your Standard Operating Procedures (SOPs). The AI will read these rules before every audit to catch process errors.</p>
       </div>
 
-      <KnowledgeManager entries={entries || []} />
+      <KnowledgeTabs entries={entries || []} />
     </div>
   )
 }
