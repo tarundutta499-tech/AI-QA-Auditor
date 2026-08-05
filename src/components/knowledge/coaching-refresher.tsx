@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { getCompanyAgents, getAgentFailedParameters, generateRefresherPlan } from '@/app/dashboard/knowledge/actions'
-import { Loader2, BrainCircuit, Sparkles, BookOpen, CheckCircle2, ChevronRight, Award } from 'lucide-react'
+import { Loader2, BrainCircuit, Sparkles, BookOpen, CheckCircle2, Award, Lightbulb } from 'lucide-react'
 
 type Runbook = {
   id: string
@@ -18,7 +18,13 @@ type Agent = {
   email: string
 }
 
-export function CoachingRefresher({ runbooks }: { runbooks: Runbook[] }) {
+export function CoachingRefresher({ 
+  runbooks, 
+  currentUser = { id: '', name: 'Agent', role: 'agent' } 
+}: { 
+  runbooks: Runbook[]
+  currentUser?: { id: string; name: string; role: string }
+}) {
   const [agents, setAgents] = useState<Agent[]>([])
   const [selectedAgentId, setSelectedAgentId] = useState('')
   const [selectedRunbookId, setSelectedRunbookId] = useState('')
@@ -33,6 +39,12 @@ export function CoachingRefresher({ runbooks }: { runbooks: Runbook[] }) {
 
   useEffect(() => {
     async function loadAgents() {
+      if (currentUser.role === 'agent') {
+        setSelectedAgentId(currentUser.id)
+        setLoading(false)
+        return
+      }
+
       setLoading(true)
       const res = await getCompanyAgents()
       if (res.success && res.agents) {
@@ -46,7 +58,7 @@ export function CoachingRefresher({ runbooks }: { runbooks: Runbook[] }) {
       setSelectedRunbookId(runbooks[0].id)
     }
     loadAgents()
-  }, [runbooks])
+  }, [runbooks, currentUser])
 
   useEffect(() => {
     async function loadFailedParams() {
@@ -60,9 +72,9 @@ export function CoachingRefresher({ runbooks }: { runbooks: Runbook[] }) {
   }, [selectedAgentId])
 
   const handleGenerate = async () => {
-    const agent = agents.find(a => a.id === selectedAgentId)
+    const agentName = currentUser.role === 'agent' ? currentUser.name : (agents.find(a => a.id === selectedAgentId)?.name || 'Agent')
     const runbook = runbooks.find(r => r.id === selectedRunbookId)
-    if (!agent || !runbook) return
+    if (!runbook) return
 
     setAnalyzing(true)
     setPlan(null)
@@ -71,7 +83,7 @@ export function CoachingRefresher({ runbooks }: { runbooks: Runbook[] }) {
 
     try {
       const res = await generateRefresherPlan(
-        agent.name,
+        agentName,
         runbook.title,
         runbook.content,
         failedParams
@@ -123,10 +135,14 @@ export function CoachingRefresher({ runbooks }: { runbooks: Runbook[] }) {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
             
-            {/* Agent Select */}
+            {/* Agent Select or Text */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-gray-400">Select New Hire / Agent</label>
-              {loading ? (
+              <label className="text-xs font-semibold text-gray-400">Agent under Training</label>
+              {currentUser.role === 'agent' ? (
+                <div className="h-10 flex items-center bg-[#020617] border border-gray-800 rounded-xl px-3 text-xs text-white font-semibold">
+                  {currentUser.name} (You)
+                </div>
+              ) : loading ? (
                 <div className="h-10 flex items-center justify-center bg-[#020617] border border-gray-800 rounded-xl text-xs text-gray-500">
                   Loading agents...
                 </div>
