@@ -26,15 +26,21 @@ export async function POST(req: NextRequest) {
     await writeFile(tempFilePath, buffer)
 
     let mimeType = documentFile.type
+    const fileNameLower = documentFile.name.toLowerCase()
+    
     if (!mimeType) {
-      if (documentFile.name.endsWith('.pdf')) mimeType = 'application/pdf'
-      else if (documentFile.name.endsWith('.txt')) mimeType = 'text/plain'
-      else if (documentFile.name.endsWith('.docx')) mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      if (fileNameLower.endsWith('.pdf')) mimeType = 'application/pdf'
+      else if (fileNameLower.endsWith('.txt')) mimeType = 'text/plain'
+      else if (fileNameLower.endsWith('.docx')) mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       else mimeType = 'application/octet-stream'
     }
 
+    const isDocx = fileNameLower.endsWith('.docx') || 
+                  (mimeType && mimeType.includes('wordprocessingml.document')) || 
+                  (mimeType && mimeType.includes('officedocument.wordprocessingml'))
+
     // Direct Mammoth parsing for Word documents (.docx)
-    if (documentFile.name.endsWith('.docx') || mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    if (isDocx) {
       const result = await mammoth.extractRawText({ path: tempFilePath })
       const text = result.value
       await unlink(tempFilePath).catch(console.error)
