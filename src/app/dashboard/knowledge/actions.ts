@@ -84,22 +84,37 @@ export async function getAgentFailedParameters(agentId: string) {
       .select(`
         id,
         is_passed,
-        parameter_id,
+        reasoning,
+        evidence,
         scorecard_parameters (
           name
         ),
         audits!inner (
           id,
-          call_id,
+          overall_score,
+          compliance_percent,
+          created_at,
           calls!inner (
-            agent_id
+            id,
+            client_name
           )
         )
       `)
       .eq('audits.calls.agent_id', agentId)
       .eq('is_passed', false)
+      .order('audits.created_at', { ascending: false })
       
     if (error) throw error
+
+    // Format failures list
+    const failuresList = results?.map((r: any) => ({
+      parameterName: r.scorecard_parameters?.name || 'Unknown Parameter',
+      callId: r.audits?.calls?.id,
+      clientName: r.audits?.calls?.client_name || 'Client Name',
+      date: r.audits?.created_at ? new Date(r.audits.created_at).toLocaleDateString() : 'N/A',
+      reason: r.reasoning || 'Did not meet scorecard criteria',
+      evidence: r.evidence || ''
+    })) || []
 
     // Count parameters occurrences
     const counts: { [name: string]: number } = {}
@@ -114,7 +129,11 @@ export async function getAgentFailedParameters(agentId: string) {
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
 
-    return { success: true, failedParameters: sorted }
+    return { 
+      success: true, 
+      failedParameters: sorted,
+      detailedFailures: failuresList 
+    }
   } catch (error: any) {
     console.error("Failed parameters fetch error:", error)
     return { success: false, error: error.message }
@@ -127,36 +146,39 @@ export async function generateRefresherPlan(
   agentName: string,
   runbookTitle: string,
   runbookContent: string,
-  failedParameters: { name: string; count: number }[]
+  detailedFailures: { parameterName: string; clientName: string; date: string; reason: string; evidence: string }[]
 ) {
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 
     const prompt = `You are a BPO Director of Quality and Onboarding.
 Prepare a custom New Hire Training / Refresher Syllabus and interactive review quiz for agent "${agentName}".
+You MUST ground your analysis strictly in the provided real-world audit observations. Do NOT make up any generic or hypothetical compliance issues.
 
 Runbook Context ("${runbookTitle}"):
 "${runbookContent}"
 
-Agent Performance Failures (Parameters they recently failed in audited calls):
-${failedParameters.map(p => `- Failed "${p.name}" (${p.count} times)`).join('\n')}
+Agent Performance Failures (Observed in Audits):
+${detailedFailures.length > 0 
+  ? detailedFailures.map((f, i) => `${i+1}. Parameter: "${f.parameterName}" | Client: "${f.clientName}" | Date: ${f.date}\n   Observation: ${f.reason}\n   Evidence: "${f.evidence}"`).join('\n\n')
+  : 'None. The agent has a 100% compliance record.'}
 
-Generate:
-1. "focus_area": Briefly summarize how the agent is failing compliance parameters compared to the runbook instructions.
-2. "daily_agenda": A Day 1 to Day 3 training roadmap showing what they should focus on.
-3. "coaching_tips": 3 actionable study/practice tips.
-4. "quiz": Generate 3 multiple-choice questions based on the runbook content to test their knowledge on their failed areas.
+CRITICAL RULES:
+1. Ground your focus area strictly in the audit observations provided above. Citing which call dates and client observations they were noted in is mandatory.
+2. In the "focus_area", write a professional evaluation detailing how the agent failed those specific parameters, referring to the evidence.
+3. If there are no compliance failures (empty list), set "focus_area" to "Congratulations! Agent ${agentName} has a 100% compliance rating in recent audits. No active SOP gaps detected." and generate a daily agenda that consists of maintaining high standards and peer-mentoring.
+4. Generate daily agenda topics that align with the runbook guidelines to remediate these specific failures.
 
 Output strictly in JSON format matching this schema:
 {
-  "focus_area": "Text summary",
+  "focus_area": "Detailed summary citing specific dates and observations",
   "daily_agenda": [
     { "day": "Day 1", "topic": "Topic name", "exercise": "Study guidelines..." }
   ],
   "coaching_tips": ["Tip 1", "Tip 2"],
   "quiz": [
     {
-      "question": "Question text",
+      "question": "Question text based on the runbook to test them on their weak points",
       "options": ["A", "B", "C", "D"],
       "answer": "Correct option text exactly"
     }

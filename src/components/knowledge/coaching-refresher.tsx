@@ -30,6 +30,7 @@ export function CoachingRefresher({
   const [selectedRunbookId, setSelectedRunbookId] = useState('')
   const [loading, setLoading] = useState(false)
   const [failedParams, setFailedParams] = useState<any[]>([])
+  const [detailedFailures, setDetailedFailures] = useState<any[]>([])
   const [analyzing, setAnalyzing] = useState(false)
   const [plan, setPlan] = useState<any | null>(null)
   
@@ -64,8 +65,9 @@ export function CoachingRefresher({
     async function loadFailedParams() {
       if (!selectedAgentId) return
       const res = await getAgentFailedParameters(selectedAgentId)
-      if (res.success && res.failedParameters) {
-        setFailedParams(res.failedParameters)
+      if (res.success) {
+        setFailedParams(res.failedParameters || [])
+        setDetailedFailures(res.detailedFailures || [])
       }
     }
     loadFailedParams()
@@ -86,7 +88,7 @@ export function CoachingRefresher({
         agentName,
         runbook.title,
         runbook.content,
-        failedParams
+        detailedFailures
       )
       if (res.success && res.data) {
         setPlan(res.data)
@@ -202,15 +204,39 @@ export function CoachingRefresher({
 
           {/* Target Gaps Preview */}
           {failedParams.length > 0 && (
-            <div className="mt-6 border-t border-gray-800/80 pt-4">
-              <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block mb-2">Targeting Performance Gaps:</span>
-              <div className="flex flex-wrap gap-2">
-                {failedParams.map((p, idx) => (
-                  <span key={idx} className="bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
-                    {p.name} (failed {p.count}x)
-                  </span>
-                ))}
+            <div className="mt-6 border-t border-gray-800/80 pt-4 space-y-4">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block mb-2">Targeting Performance Gaps:</span>
+                <div className="flex flex-wrap gap-2">
+                  {failedParams.map((p, idx) => (
+                    <span key={idx} className="bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
+                      {p.name} (failed {p.count}x)
+                    </span>
+                  ))}
+                </div>
               </div>
+
+              {detailedFailures.length > 0 && (
+                <div className="border-t border-gray-800/40 pt-4 space-y-3">
+                  <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block">Observed Audit History Failures (QA Evidence):</span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {detailedFailures.slice(0, 4).map((f, idx) => (
+                      <div key={idx} className="bg-[#020617]/50 border border-gray-800/60 rounded-2xl p-3 text-xs space-y-1.5 shadow-inner">
+                        <div className="flex justify-between items-center text-[10px]">
+                          <span className="font-extrabold text-red-400 uppercase tracking-wider">{f.parameterName}</span>
+                          <span className="text-gray-500 font-mono font-semibold">{f.date}</span>
+                        </div>
+                        <p className="text-gray-300 font-medium leading-relaxed italic">"{f.reason}"</p>
+                        {f.evidence && (
+                          <div className="text-[10px] text-gray-500 font-mono bg-black/20 p-1.5 rounded-lg border border-gray-900 truncate">
+                            Evidence: {f.evidence}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
