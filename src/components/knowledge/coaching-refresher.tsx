@@ -153,7 +153,9 @@ export function CoachingRefresher({
                   className="w-full h-10 bg-[#020617] border border-gray-800 rounded-xl px-3 text-white text-xs focus:ring-1 focus:ring-blue-500"
                 >
                   {agents.map(a => (
-                    <option key={a.id} value={a.id}>{a.name} ({a.email})</option>
+                    <option key={a.id} value={a.id}>
+                      {a.name || a.email.split('@')[0]} ({a.email})
+                    </option>
                   ))}
                   {agents.length === 0 && (
                     <option value="">No agents found</option>

@@ -65,7 +65,6 @@ export async function getCompanyAgents() {
       .from('users')
       .select('id, name, email, role')
       .eq('company_id', dbUser.company_id)
-      .eq('role', 'agent')
 
     if (error) throw error
     return { success: true, agents: agents || [] }
