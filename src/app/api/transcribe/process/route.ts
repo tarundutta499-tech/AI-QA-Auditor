@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { GoogleGenAI } from '@google/genai'
 import { processAudit } from '@/lib/audit-service'
+import { after } from 'next/server'
 
 export const maxDuration = 60; // Allow Vercel functions to run up to 60 seconds
 
@@ -31,23 +32,36 @@ export async function POST(req: NextRequest) {
     const adminSupabase = getAdminClient()
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 
-    // Process using the centralized AI Brain
-    const result = await processAudit({
-      supabase: adminSupabase,
-      callId: callId,
-      scorecardId,
-      agentId,
-      auditType: auditType as 'audio' | 'chat',
-      geminiFile,
-      chatTranscript: chatTranscript || undefined
+    // Schedule heavy AI auditing in the background to prevent Vercel 10s execution timeouts
+    after(async () => {
+      try {
+        console.log(`[After] Starting background audit for call: ${callId}`)
+        await processAudit({
+          supabase: adminSupabase,
+          callId: callId,
+          scorecardId,
+          agentId,
+          auditType: auditType as 'audio' | 'chat',
+          geminiFile,
+          chatTranscript: chatTranscript || undefined
+        })
+        console.log(`[After] Background audit completed for call: ${callId}`)
+      } catch (err) {
+        console.error(`[After] Background audit error for call ${callId}:`, err)
+      } finally {
+        // Cleanup remote gemini file
+        if (geminiFile && geminiFile.name) {
+          await ai.files.delete({ name: geminiFile.name }).catch(console.error)
+        }
+      }
     })
 
-    // Cleanup remote gemini file
-    if (geminiFile && geminiFile.name) {
-      await ai.files.delete({ name: geminiFile.name }).catch(console.error)
-    }
-
-    return NextResponse.json({ success: true, audit_id: result.audit_id })
+    // Return success immediately with queued status
+    return NextResponse.json({ 
+      success: true, 
+      status: 'queued', 
+      call_id: callId 
+    }, { status: 200 })
 
   } catch (error: any) {
     console.error('Transcription Process error:', error)

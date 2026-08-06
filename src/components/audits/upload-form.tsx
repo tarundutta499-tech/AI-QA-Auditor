@@ -106,7 +106,12 @@ export function UploadForm({ scorecards, agents, companyId }: { scorecards: any[
       }
 
       const result = await processRes.json()
-      router.push(`/dashboard/audits/${result.audit_id}`)
+      if (result.status === 'queued') {
+        router.push('/dashboard/audits')
+        alert('Call recording successfully uploaded and queued! The AI will analyze the call in the background. The audit results will appear in your Audit History table in 10-15 seconds.')
+      } else {
+        router.push(`/dashboard/audits/${result.audit_id}`)
+      }
     } catch (error: any) {
       console.error(error)
       alert(error.message || 'An error occurred during the audit process.')
