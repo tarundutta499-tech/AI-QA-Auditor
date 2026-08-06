@@ -19,15 +19,12 @@ type Agent = {
 }
 
 export function CoachingRefresher({ 
-  runbooks, 
   currentUser = { id: '', name: 'Agent', role: 'agent' } 
 }: { 
-  runbooks: Runbook[]
   currentUser?: { id: string; name: string; role: string }
 }) {
   const [agents, setAgents] = useState<Agent[]>([])
   const [selectedAgentId, setSelectedAgentId] = useState('')
-  const [selectedRunbookId, setSelectedRunbookId] = useState('')
   const [loading, setLoading] = useState(false)
   const [failedParams, setFailedParams] = useState<any[]>([])
   const [detailedFailures, setDetailedFailures] = useState<any[]>([])
@@ -55,11 +52,8 @@ export function CoachingRefresher({
       setLoading(false)
     }
 
-    if (runbooks.length > 0) {
-      setSelectedRunbookId(runbooks[0].id)
-    }
     loadAgents()
-  }, [runbooks, currentUser])
+  }, [currentUser])
 
   useEffect(() => {
     async function loadFailedParams() {
@@ -75,8 +69,6 @@ export function CoachingRefresher({
 
   const handleGenerate = async () => {
     const agentName = currentUser.role === 'agent' ? currentUser.name : (agents.find(a => a.id === selectedAgentId)?.name || 'Agent')
-    const runbook = runbooks.find(r => r.id === selectedRunbookId)
-    if (!runbook) return
 
     setAnalyzing(true)
     setPlan(null)
@@ -86,8 +78,6 @@ export function CoachingRefresher({
     try {
       const res = await generateRefresherPlan(
         agentName,
-        runbook.title,
-        runbook.content,
         detailedFailures
       )
       if (res.success && res.data) {
@@ -135,7 +125,7 @@ export function CoachingRefresher({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
             
             {/* Agent Select or Text */}
             <div className="space-y-2">
@@ -166,27 +156,10 @@ export function CoachingRefresher({
               )}
             </div>
 
-            {/* Runbook Select */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-gray-400">Select Runbook / SOP</label>
-              <select
-                value={selectedRunbookId}
-                onChange={(e) => setSelectedRunbookId(e.target.value)}
-                className="w-full h-10 bg-[#020617] border border-gray-800 rounded-xl px-3 text-white text-xs focus:ring-1 focus:ring-blue-500"
-              >
-                {runbooks.map(r => (
-                  <option key={r.id} value={r.id}>{r.title}</option>
-                ))}
-                {runbooks.length === 0 && (
-                  <option value="">No runbooks uploaded yet</option>
-                )}
-              </select>
-            </div>
-
             {/* Generate Action Button */}
             <Button
               onClick={handleGenerate}
-              disabled={analyzing || !selectedAgentId || !selectedRunbookId}
+              disabled={analyzing || !selectedAgentId}
               className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl h-10 font-bold text-xs gap-2 flex items-center justify-center"
             >
               {analyzing ? (

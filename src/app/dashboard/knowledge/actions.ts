@@ -144,19 +144,13 @@ import { GoogleGenAI } from '@google/genai'
 
 export async function generateRefresherPlan(
   agentName: string,
-  runbookTitle: string,
-  runbookContent: string,
   detailedFailures: { parameterName: string; clientName: string; date: string; reason: string; evidence: string }[]
 ) {
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 
     const prompt = `You are a BPO Director of Quality and Onboarding.
-Prepare a custom New Hire Training / Refresher Syllabus and interactive review quiz for agent "${agentName}".
-You MUST ground your analysis strictly in the provided real-world audit observations. Do NOT make up any generic or hypothetical compliance issues.
-
-Runbook Context ("${runbookTitle}"):
-"${runbookContent}"
+Prepare a custom training refresher syllabus and interactive review quiz for agent "${agentName}" based strictly on the provided real-world audit observations.
 
 Agent Performance Failures (Observed in Audits):
 ${detailedFailures.length > 0 
@@ -164,10 +158,11 @@ ${detailedFailures.length > 0
   : 'None. The agent has a 100% compliance record.'}
 
 CRITICAL RULES:
-1. Ground your focus area strictly in the audit observations provided above. Citing which call dates and client observations they were noted in is mandatory.
+1. Ground your focus area strictly in the audit observations provided above. You must explicitly reference which call dates and client observations they were noted in.
 2. In the "focus_area", write a professional evaluation detailing how the agent failed those specific parameters, referring to the evidence.
 3. If there are no compliance failures (empty list), set "focus_area" to "Congratulations! Agent ${agentName} has a 100% compliance rating in recent audits. No active SOP gaps detected." and generate a daily agenda that consists of maintaining high standards and peer-mentoring.
-4. Generate daily agenda topics that align with the runbook guidelines to remediate these specific failures.
+4. Generate a daily training agenda and actionable coaching tips that specifically target remediating these compliance failures (e.g. scripting adjustments, verification steps, hold-time management).
+5. Generate 3 multiple-choice review questions to test their knowledge on how to correctly perform the procedures they failed (e.g. if they failed "Greeting", ask a question about standard professional greeting protocol).
 
 Output strictly in JSON format matching this schema:
 {
@@ -178,7 +173,7 @@ Output strictly in JSON format matching this schema:
   "coaching_tips": ["Tip 1", "Tip 2"],
   "quiz": [
     {
-      "question": "Question text based on the runbook to test them on their weak points",
+      "question": "Question text based on correct procedures for failed parameters",
       "options": ["A", "B", "C", "D"],
       "answer": "Correct option text exactly"
     }
