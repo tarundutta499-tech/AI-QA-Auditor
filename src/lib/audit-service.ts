@@ -54,87 +54,126 @@ export async function processAudit({
 
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
   
-  let transcriptData: any = null
+  let analysis: any = null
 
-  // PASS 1: Transcription (if audio)
+  // Single Pass Audit and Transcription (forces 1 API call instead of 2 to prevent serverless function timeouts)
   if (geminiFile) {
-    const transcriptPrompt = `
-Generate a precise, standardized transcript of this audio call with speaker labels (Agent, Customer) and timestamps.
-IMPORTANT MASKING RULE: You MUST redact all Personally Identifiable Information (PII) including names, phone numbers, addresses, credit cards, company names, app names, or service names from the transcript text. Replace them with [REDACTED].
-Return STRICTLY a JSON array of objects with this exact structure, and absolutely nothing else:
-[
-  { "speaker": "Agent", "timestamp": "0:00", "text": "Hello" }
-]
-`
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: [
-        { fileData: { fileUri: geminiFile.uri, mimeType: geminiFile.mimeType } },
-        transcriptPrompt
-      ],
-      config: { temperature: 0.0, topP: 0.1, responseMimeType: "application/json" }
-    })
-    
-    if (!response.text) throw new Error("Failed to generate transcript from audio.")
-    transcriptData = JSON.parse(response.text.replace(/```json\n?|```/g, '').trim())
-  } else if (chatTranscript) {
-    transcriptData = [ { speaker: "Chat", timestamp: "0:00", text: chatTranscript } ]
-  } else {
-    throw new Error("No audio file or chat transcript provided")
-  }
+    const singlePassPrompt = `
+You are an expert QA Auditor for customer support interactions.
+Listen to the attached audio call and perform the following tasks:
 
-  // PASS 2: QA Audit (based exclusively on the generated text transcript)
-  const auditPrompt = `
-You are an expert QA Auditor for customer support interactions. 
-Analyze the following transcript of the interaction:
-${JSON.stringify(transcriptData)}
+1. Generate a precise, standardized transcript of the call with speaker labels (Agent, Customer) and timestamps.
+IMPORTANT MASKING RULE: You MUST redact all Personally Identifiable Information (PII) including names, phone numbers, addresses, credit cards, company names, app names, or service names from the transcript text. Replace them with [REDACTED].
+
+2. Identify any "dead air" (silences > 30 seconds) or unusually long delays in response by analyzing the timestamps between messages.
+
+3. Audit the call based strictly on the following scorecard parameters. For each parameter, you must extract exact evidence from the audio/transcript BEFORE scoring.
+Parameters to score:
+${parameters.map((p: any) => `- ${p.name} (Max Score: ${p.max_score}, Weight: ${p.weightage})`).join('\n')}
+
 ${knowledgeContext}
 
-1. Identify any "dead air" (silences > 30 seconds) or unusually long delays in response by analyzing the timestamps between messages.
-2. Audit the call based strictly on the following scorecard parameters. For each parameter, you must extract exact evidence from the transcript BEFORE scoring.
-${parameters.map((p: any) => `- ${p.name} (Max Score: ${p.max_score}, Weight: ${p.weightage})`).join('\n')}
-3. Evaluate the agent's tone and empathy out of 100 based on the text.
-4. Provide coaching feedback.
+4. Evaluate the agent's tone and empathy out of 100.
+5. Provide actionable coaching feedback.
 
 Return the result STRICTLY as a JSON object with this exact structure:
 {
+  "transcript": [
+    { "speaker": "Agent", "timestamp": "0:00", "text": "Redacted text..." }
+  ],
   "dead_air_events": [ { "start_time": "0:15", "duration_seconds": 35, "impact": "negative" } ],
   "audit_results": [
     {
-      "parameter_name": "Greeting",
-      "evidence": "Extract the exact quote(s) from the transcript here FIRST.",
+      "parameter_name": "Parameter Name exactly matching the list",
+      "evidence": "Extract the exact quote(s) here FIRST.",
       "reasoning": "Write a detailed logical explanation based strictly on the evidence.",
       "is_passed": true,
       "obtained_score": 10
     }
   ],
   "coaching": {
-    "strengths": "String",
-    "improvement_areas": "String",
-    "recommended_actions": "String"
+    "strengths": "String description of strengths",
+    "improvement_areas": "String description of improvements",
+    "recommended_actions": "String description of recommended actions"
   },
   "overall_compliance_percent": 100,
   "empathy_score": 100,
-  "inappropriate_behavior_detected": true,
+  "inappropriate_behavior_detected": false,
   "inappropriate_behavior_details": "Explain specifically if the agent was rude, sarcastic, abusive, or acted inappropriately. Provide the exact transcript snippet. Null if none."
 }
 `
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: [auditPrompt],
-    config: {
-      temperature: 0.0,
-      topP: 0.1,
-      responseMimeType: "application/json",
-    }
-  })
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [
+        { fileData: { fileUri: geminiFile.uri, mimeType: geminiFile.mimeType } },
+        singlePassPrompt
+      ],
+      config: { 
+        temperature: 0.0, 
+        topP: 0.1, 
+        responseMimeType: "application/json" 
+      }
+    })
 
-  const resultText = response.text
-  if (!resultText) throw new Error("No response from Gemini Audit Pass")
-  
-  const cleanJsonText = resultText.replace(/```json\n?|```/g, '').trim()
-  const analysis = JSON.parse(cleanJsonText)
+    if (!response.text) throw new Error("No response from Gemini Audit Pass")
+    const cleanJsonText = response.text.replace(/```json\n?|```/g, '').trim()
+    analysis = JSON.parse(cleanJsonText)
+
+  } else if (chatTranscript) {
+    const chatPrompt = `
+You are an expert QA Auditor for customer support interactions.
+Audit the following chat transcript:
+"${chatTranscript}"
+
+SOP Scorecard Parameters:
+${parameters.map((p: any) => `- ${p.name} (Max Score: ${p.max_score}, Weight: ${p.weightage})`).join('\n')}
+
+${knowledgeContext}
+
+Evaluate tone/empathy and coaching feedback.
+Return the result STRICTLY as a JSON object matching this structure:
+{
+  "transcript": [
+    { "speaker": "Agent", "timestamp": "0:00", "text": "Line text..." }
+  ],
+  "dead_air_events": [],
+  "audit_results": [
+    {
+      "parameter_name": "Parameter Name exactly",
+      "evidence": "Evidence quote...",
+      "reasoning": "Reasoning...",
+      "is_passed": true,
+      "obtained_score": 10
+    }
+  ],
+  "coaching": {
+    "strengths": "Strengths",
+    "improvement_areas": "Improvements",
+    "recommended_actions": "Actions"
+  },
+  "overall_compliance_percent": 100,
+  "empathy_score": 100,
+  "inappropriate_behavior_detected": false,
+  "inappropriate_behavior_details": null
+}
+`
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [chatPrompt],
+      config: {
+        temperature: 0.0,
+        topP: 0.1,
+        responseMimeType: "application/json"
+      }
+    })
+
+    if (!response.text) throw new Error("No response from Gemini Chat Audit")
+    const cleanJsonText = response.text.replace(/```json\n?|```/g, '').trim()
+    analysis = JSON.parse(cleanJsonText)
+  } else {
+    throw new Error("No audio file or chat transcript provided")
+  }
 
   // Calculate total score
   const maxScore = parameters.reduce((sum: number, p: any) => sum + p.max_score, 0)
@@ -147,8 +186,8 @@ Return the result STRICTLY as a JSON object with this exact structure:
   // Insert Transcript
   await supabase.from('transcripts').insert({
     call_id: callId,
-    content: transcriptData,
-    dead_air_events: analysis.dead_air_events
+    content: analysis.transcript || [],
+    dead_air_events: analysis.dead_air_events || []
   })
 
   // Insert Audit
