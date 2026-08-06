@@ -129,30 +129,32 @@ export function UploadForm({ scorecards, agents, companyId }: { scorecards: any[
           
           <div className="space-y-2">
             <Label htmlFor="agent_id">Agent</Label>
-            <Select name="agent_id" required>
-              <SelectTrigger>
-                <SelectValue placeholder="Select an agent" />
-              </SelectTrigger>
-              <SelectContent>
-                {agents.map(a => (
-                  <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <select
+              id="agent_id"
+              name="agent_id"
+              required
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="">Select an agent</option>
+              {agents.map(a => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </select>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="scorecard_id">QA Scorecard</Label>
-            <Select name="scorecard_id" required>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a scorecard" />
-              </SelectTrigger>
-              <SelectContent>
-                {scorecards.map(s => (
-                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <select
+              id="scorecard_id"
+              name="scorecard_id"
+              required
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="">Select a scorecard</option>
+              {scorecards.map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
           </div>
 
           <div className="space-y-2 pt-4">
