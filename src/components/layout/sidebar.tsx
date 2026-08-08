@@ -19,7 +19,6 @@ export function Sidebar({ role = 'agent' }: { role?: string }) {
     { label: 'Operations & ACW', href: '/dashboard/operations', icon: Workflow },
     { label: 'Pulse AI Analyst', href: '/dashboard/pulse-ai', icon: Sparkles },
     { label: 'AI Agent Sandbox', href: '/dashboard/sandbox', icon: Cpu },
-    { label: 'AI Refresher Plans', href: '/dashboard/training', icon: Award },
     { label: 'DSAT Alerts', href: '/dashboard/dsat', icon: AlertTriangle },
     { label: 'QA Calibrations', href: '/dashboard/calibrations', icon: Scale },
     { label: 'Scorecards', href: '/dashboard/scorecards', icon: ListChecks },
@@ -35,7 +34,6 @@ export function Sidebar({ role = 'agent' }: { role?: string }) {
       { label: 'My Audits', href: '/dashboard/audits', icon: ListChecks },
       { label: 'My Scores', href: '/dashboard/reports', icon: BarChart3 },
       { label: 'AI Agent Sandbox', href: '/dashboard/sandbox', icon: Cpu },
-      { label: 'My AI Training', href: '/dashboard/training', icon: Award },
       { label: 'Agent Co-Pilot (Live)', href: '/dashboard/agent-assist', icon: Activity },
       { label: 'Knowledge Base', href: '/dashboard/knowledge', icon: BookOpen },
     ]
